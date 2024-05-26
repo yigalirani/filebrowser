@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "allowArbitraryExtensions":true,
+    "target": "es2022",
+    "lib": [
+       "ES2023"
+    ],
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "strictFunctionTypes": true,
+    "module": "CommonJS",
+    "allowImportingTsExtensions":true,
+    "esModuleInterop":true,
+    "noImplicitAny": true,
+    "alwaysStrict":true,
+    "noImplicitReturns":true,
+    "strictNullChecks"             : true,
+    "noUncheckedIndexedAccess"     : true,
+    "noErrorTruncation"            : true,
+    // Generate d.ts files
+    "declaration": true,
+    // This compiler run should
+    // only output d.ts files
+    "emitDeclarationOnly": true,
+    // Types should go into this directory.
+    // Removing this would place the .d.ts files
+    // next to the .js files
+    "outDir": "dist/types",
+    // go to js file when using IDE functions like
+    // "Go to Definition" in VSCode
+    "declarationMap": true,
+  },
+  "lib": ["ES2023"],
+  "exclude": ["node_modules", "dist","tmp"]
+}
