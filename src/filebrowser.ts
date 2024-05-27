@@ -4,7 +4,8 @@ import express,{Request, Response } from 'express';
 import {formatBytes,timeSince} from './utils'
 import session from 'express-session';
 import {encode} from 'html-entities'
-
+// @ts-ignore //is there a better way to import untyped 
+import style from './style.css'
 // @ts-ignore
 import varlog from 'varlog';
 
@@ -14,6 +15,7 @@ const host =process.env.HOST||'0.0.0.0'
 
 app.use(express.static('static'))
 app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
+app.use(express.static('media')) 
 async function mystats(dir:string,filepath:string){
   try{
     const fullpath=(dir+'/'+filepath).replace('//','/')
@@ -35,7 +37,7 @@ function format_row(stats:MyStats){
   const encoded_filepath=encode(filepath)
   const encoded_error=encode(error)
   if (error!=undefined){
-    return `<tr><td>${encoded_filepath}</td><td td colspan=2>${encoded_error}</td></tr>`
+    return `<tr><td>${encoded_filepath}</td><td colspan=2>${encoded_error}</td></tr>`
   }
   const {size,mtimeMs,is_dir}=stats
   if (is_dir){ 
@@ -69,7 +71,8 @@ async  function get(req:Request, res:Response){
 try{
     const stats=await get_files(filepath)
     console.log(typeof stats)
-    const content=format_table(stats)
+    const table=format_table(stats)
+    const content=`<html><style>${style}</style>${table}</html>`
     res.send(content)
   }catch(ex){
     res.end(ex+''+filepath)
