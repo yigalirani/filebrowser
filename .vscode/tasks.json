@@ -4,26 +4,32 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label":"watch_build",
+      "label":"server",
+      "type":"shell",
+      "command":"npm run watch_server",
+    },    
+    {
+      "label":"build",
       "type":"shell",
       "command":"npm run   watch_build",
     },
     {
-      "label": "watch_tsc",
+      "label": "tsc",
       "type": "shell",
       "command": "npm run  watch_tsc",
     },  
     {
-      "label": "watch_eslint",
+      "label": "eslint",
       "type": "shell",
       "command": "npm run watch_eslint",
     },      
     {
       "label": "runall",
       "dependsOn": [
-        "watch_build",
-        "watch_eslint",
-        "watch_tsc"
+        "build",
+        "eslint",
+        "tsc",
+        "server"
       ]
     }    
   ]

@@ -4,28 +4,32 @@
   "description": "",
   "main": "dist/index.js",
   "watch": {
-    "eslint":{
-            "extensions": "ts,js,html,css",
-            "quiet": false,
-            "patterns": [
-                "src"
-            ]
-    },
-    "build":{
+    "eslint": {
       "extensions": "ts,js,html,css",
       "quiet": false,
       "patterns": [
-          "src"
+        "src"
       ]
     },
-    "tsc":{
+    "build": {
+      "extensions": "ts,js,html,css",
+      "quiet": false,
+      "patterns": [
+        "src"
+      ]
+    },
+    "tsc": {
       "extensions": "ts",
       "quiet": false,
       "patterns": [
-          "src"
+        "src"
       ]
-}    
-    
+    },
+    "server":{
+      "patterns": [
+        "dist/filebrowser.js"
+      ]
+    }
   },
   "scripts": {
     "build": "ts-node build.ts",
@@ -33,13 +37,16 @@
     "tsc": "tsc",
     "watch_build": "npm-watch build",
     "watch_tsc": "npm-watch tsc",
-    "watch_eslint": "npm-watch eslint"
+    "watch_eslint": "npm-watch eslint",
+    "watch_server": "npm-watch server",
+    "server":"node dist/filebrowser.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.19.2",
     "express-session": "^1.18.0",
+    "html-entities": "^2.5.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
     "varlog": "^1.0.2"

@@ -1,6 +1,6 @@
 import * as esbuild from 'esbuild'
 
-esbuild.build({
+esbuild.build({ 
   entryPoints: ['src/filebrowser.ts'],
   platform: 'node',
   bundle: true,
