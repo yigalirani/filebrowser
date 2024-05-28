@@ -39,13 +39,15 @@ async function get_files({parent_absolute}:{parent_absolute:string}){
 
 async  function get(req:Request, res:Response){
   const {url}=req
-  const parent_absolute=posix.join(root_dir,url)
+  const decoded_url=decodeURI(url)
+  const parent_absolute=posix.join(root_dir,decoded_url)
   const parent_relative=posix.relative(root_dir,parent_absolute)
   var fields={
       parent_absolute,
       root:root_dir,
       parent_relative,
-      url
+      url,
+      decoded_url
     }
 try{
     const stats=await get_files({parent_absolute})
