@@ -19,3 +19,9 @@ body{
 .filename{
   display: flex;
 }
+.info{
+  background-color: #e1edd066;
+  display: block;
+  padding: 10px;
+  width: fit-content;
+}

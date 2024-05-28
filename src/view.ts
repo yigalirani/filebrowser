@@ -90,6 +90,8 @@ function render_row(stats:MyStats,cur_time:number){
 function  render_table(stats:MyStats[]){
   const cur_time=Date.now()
   const rows=stats.map(stats=>render_row(stats,cur_time)).join('\n')
+  if (rows.length==0)
+    return '<div class=info>(empty directory)</div>'
   return `<table>
   <tr>
     <th>filename</th>
