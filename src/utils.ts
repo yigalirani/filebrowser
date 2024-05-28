@@ -1,3 +1,6 @@
+import path from 'node:path'
+
+const {posix}=path
 export function timeSince(ms:number) {
   var seconds = Math.floor(ms / 1000);
   var interval = seconds / 31536000;
@@ -36,3 +39,18 @@ export function formatBytes(bytes: number, decimals = 2): string {
   const formattedBytes = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
   return `${formattedBytes} ${size}`;
 } 
+export function encode_path(absolute:string){
+  console.log({absolute})
+  const legs=posix.normalize(absolute).split('/').filter(Boolean)
+  const ans= '/'+legs.map(encodeURI).join('/') //coulnt find any node api that does this
+  return ans
+}
+export function to_posix(url:string){
+  const ans1=url.split(path.sep)
+  const ans2=ans1.join(posix.sep);
+  return ans2
+}
+
+export function get_error(ex:any):string{
+  return ex.toString().split(/:|,/)[2] 
+}
