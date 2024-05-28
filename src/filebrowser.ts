@@ -70,7 +70,7 @@ try{
       return
     }
     if (is_plain(parent_absolute)){
-      res.end(render_page(`<img src='${parent_absolute}'>`,render_data))
+      res.end(render_page(`<br><img src='/static${parent_absolute}'>`,render_data))
       return
     }
     res.end(render_page('<div class=info>todo render content of file</div>',render_data))
@@ -79,6 +79,7 @@ try{
     res.end(render_error_page(error,render_data))
   }
 }
+app.use('/static',express.static('/'))
 app.get('/login',function get(req:Request, res:Response){
   res.end(
     '<h1>login</h1>'+logit({req,res})
