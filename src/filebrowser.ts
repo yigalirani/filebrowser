@@ -12,6 +12,7 @@ import {
   render_table_page,
   render_txt
 } from './view';
+import { marked } from 'marked'
 // @ts-ignore
 import path from 'node:path';
 const {posix}=path
@@ -78,7 +79,11 @@ try{
       res.end(render_image(render_data))
       return
     }
-    if (['txt','py','cmd','js','ts'].includes(ext)){
+    if (['md'].includes(ext)){
+      const txt=await fs.readFile(parent_absolute, 'utf8')
+      res.end(render_page(await marked.parse(txt),render_data))
+    }
+    if (['txt','py','cmd','js','ts','php','json'].includes(ext)){
       const txt=await fs.readFile(parent_absolute, 'utf8')
       res.end(render_txt(txt,render_data))
       return
