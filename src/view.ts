@@ -145,3 +145,11 @@ export function render_error_page(error:string,render_data:RenderData){
   const center=`<div class=error>${error}</div>`
   return render_page(center,render_data)
 }
+export function render_image(render_data:RenderData){
+  const {parent_absolute}=render_data
+  return render_page(`<br><img src='/static${parent_absolute}'>`,render_data)
+}
+export function render_txt(txt:string,render_data:RenderData){
+  const encoded_txt=encode(txt)
+  return render_page(`<pre>${encoded_txt}</pre>`,render_data)
+}

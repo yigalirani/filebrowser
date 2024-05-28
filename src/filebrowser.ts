@@ -1,11 +1,19 @@
 
-import { promises as fs } from 'fs';
-import express,{Request, Response } from 'express';
-import {render_page,MyStats,logit,render_error_page,render_table_page} from './view'
-import {get_error} from './utils'
+import express, { Request, Response } from 'express';
 import session from 'express-session';
+import { promises as fs } from 'fs';
+import { get_error } from './utils';
+import {
+  MyStats, 
+  logit, 
+  render_error_page, 
+  render_image, 
+  render_page, 
+  render_table_page,
+  render_txt
+} from './view';
 // @ts-ignore
-import path from 'node:path'
+import path from 'node:path';
 const {posix}=path
 const root_dir='/'
 
@@ -17,10 +25,6 @@ app.use(express.static('static'))
 app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
 app.use(express.static('media')) 
 const image_ext=['jpg','gif','svg','png']
-function is_plain(parent_absolute:string){
-  const ext=path.extname(parent_absolute).toLowerCase().replace('.','')
-  return image_ext.includes(ext)
-}
 async function mystats({parent_absolute,base}:{ //absolute_path is a directory
   parent_absolute:string,
   base:string
@@ -69,10 +73,17 @@ try{
       res.end(content)
       return
     }
-    if (is_plain(parent_absolute)){
-      res.end(render_page(`<br><img src='/static${parent_absolute}'>`,render_data))
+    const ext=path.extname(parent_absolute).toLowerCase().replace('.','')
+    if (image_ext.includes(ext)){
+      res.end(render_image(render_data))
       return
     }
+    if (['txt','py','cmd','js','ts'].includes(ext)){
+      const txt=await fs.readFile(parent_absolute, 'utf8')
+      res.end(render_txt(txt,render_data))
+      return
+    }
+
     res.end(render_page('<div class=info>todo render content of file</div>',render_data))
   }catch(ex){
     const error=get_error(ex)
