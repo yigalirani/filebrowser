@@ -16,7 +16,11 @@ const host =process.env.HOST||'0.0.0.0'
 app.use(express.static('static'))
 app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
 app.use(express.static('media')) 
-
+const image_ext=['jpg','gif','svg','png']
+function is_plain(parent_absolute:string){
+  const ext=path.extname(parent_absolute).toLowerCase().replace('.','')
+  return image_ext.includes(ext)
+}
 async function mystats({parent_absolute,base}:{ //absolute_path is a directory
   parent_absolute:string,
   base:string
@@ -65,7 +69,11 @@ try{
       res.end(content)
       return
     }
-    res.end(render_page('todo render content of file',render_data))
+    if (is_plain(parent_absolute)){
+      res.end(render_page(`<img src='${parent_absolute}'>`,render_data))
+      return
+    }
+    res.end(render_page('<div class=info>todo render content of file</div>',render_data))
   }catch(ex){
     const error=get_error(ex)
     res.end(render_error_page(error,render_data))
