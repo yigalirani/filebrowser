@@ -8,7 +8,16 @@ import {encode} from 'html-entities'
 import style from './style.css'
 // @ts-ignore
 import varlog from 'varlog';
-
+import path from 'node:path'
+/*
+teminology 
+* __dirname The directory name of the current module. 
+* base      last leg of a path
+* relative  full path relative to the _dir_name
+* absolute full path relative to to / can be either path or file
+* absolute_path 
+* absolute_file
+*/
 const app = express();
 const port = 80
 const host =process.env.HOST||'0.0.0.0'
@@ -16,66 +25,103 @@ const host =process.env.HOST||'0.0.0.0'
 app.use(express.static('static'))
 app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
 app.use(express.static('media')) 
-async function mystats(dir:string,filepath:string){
+async function mystats({parent_absolute,base}:{ //absolute_path is a directory
+  parent_absolute:string,
+  base:string
+}){
+  const absolute=path.join(parent_absolute,base)
+  const relative=path.relative(__dirname,absolute) // will this throw?
   try{
-    const fullpath=(dir+'/'+filepath).replace('//','/')
-    console.log(fullpath)
-    const stats = await fs.stat(fullpath);
+    
+    //console.log(fullpath)
+    const stats = await fs.stat(absolute);
     const is_dir=stats.isDirectory()
-    return {filepath,...stats,is_dir}
+    return {base,absolute,relative,...stats,is_dir}
   }catch(error){
-    return {filepath,error:error+''}
+    return {base,absolute,relative,error:error+''}
   } 
 }
 export type MyStats = Awaited<ReturnType<typeof mystats>>
-async function get_files(dir:string){
-  const files=await fs.readdir(dir)
-  return await Promise.all(files.map(file=>mystats(dir,file))) //thank you https://stackoverflow.com/a/40140562/39939
+async function get_files({parent_absolute}:{parent_absolute:string}){
+  const files=await fs.readdir(parent_absolute)
+  return await Promise.all(files.map(base=>mystats({parent_absolute,base}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
 function format_row(stats:MyStats){
-  const {filepath,error}=stats
-  const encoded_filepath=encode(filepath)
-  const encoded_error=encode(error)
+  const {relative,base,error}=stats
   if (error!=undefined){
-    return `<tr><td>${encoded_filepath}</td><td colspan=2>${encoded_error}</td></tr>`
+    return `<tr>
+      <td class=filename>
+        <div class=icon>&#128462;</div>
+        ${encode(base)}
+      </td>
+      <td colspan=2>${encode(error)}</td>
+    </tr>`
   }
   const {size,mtimeMs,is_dir}=stats
-  if (is_dir){ 
-    return `<tr><td colspan=3><a href='/${encoded_filepath}'>${encoded_filepath}</a></td><td></tr>`
+  if (is_dir){
+    return `<tr>
+      <td class=filename>
+        <div class=icon>&#128193;</div>
+        <a href='/${encode(relative)}'>${encode(base)}</a>
+      </td>
+      <td></td>
+      <td>${timeSince(mtimeMs)}<td>
+    </tr>`
   }
-  const sizef=formatBytes(size)
-  const mtimeMsf=timeSince(mtimeMs)
-  return `<tr><td>${filepath}</td><td>${sizef}</td><td>${mtimeMsf}</td></tr>`
+
+  return `<tr>
+    <td class=filename>
+      <div class=icon>&#128462;</div>
+      ${encode(base)}
+    </td>
+    <td>${formatBytes(size)}</td>
+    <td>${timeSince(mtimeMs)}</td>
+  </tr>`
 } 
 function  format_table(stats:MyStats[]){
-  const rows=stats.map(format_row).join('\n')
-  return `<table><tr>
+  const rows=stats.map(stats=>format_row(stats)).join('\n')
+  return `<table>
+  <tr>
     <th>filename</th>
     <th>size</th>
     <th>last changed</th>
-    <tr>
+  <tr>
     ${rows}
-    </table>`
+  </table>`
+}
+function logit(x:any){
+  return ''//varlog.css+varlog.dump('logit',x)
 }
 async  function get(req:Request, res:Response){
   const {url}=req
-  /*res.end(
-    varlog.css+
-    '<h1>get</h1>'+
-    varlog.dum1p('req',req,4)//2 refers to depth, default is 3
-    //varlog.dump('res',res)
-  )  
-  return(*/
-  const filepath = url//req.params['path']||'.' as  string
-  console.log('get',filepath)
+  const parent_absolute=path.join(__dirname,url)
+  const parent_relative=path.relative(__dirname,parent_absolute)
+  var fields={
+      parent_absolute,
+      __dirname,
+      parent_relative,
+      url
+    }
+  
+
 try{
-    const stats=await get_files(filepath)
-    console.log(typeof stats)
+    const stats=await get_files({parent_absolute})
     const table=format_table(stats)
-    const content=`<html><style>${style}</style>${table}</html>`
+    const content=`
+  <html>
+    <style>${style}</style>
+    <h1>${parent_relative}</h1>  
+    ${logit({fields,stats})},
+    ${table},
+  </html>`
     res.send(content)
   }catch(ex){
-    res.end(ex+''+filepath)
+    const content=`<html>
+    <style>${style}</style>
+    ${logit(fields)},
+    <div class=error>${ex+''}</div>
+  </html>`    
+    res.end(content)
     //res.send()
   }
 }
