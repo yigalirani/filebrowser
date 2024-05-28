@@ -2,6 +2,8 @@ import {formatBytes,timeSince,encode_path} from './utils'
 import {encode} from 'html-entities'
 // @ts-ignore //is there a better way to import untyped?
 import style from './style.css'
+// @ts-ignore
+import styleh from 'highlight.js/styles/github.css';
 export interface RenderData{
   fields:any
   parent_absolute:string
@@ -129,7 +131,7 @@ export function render_page(center:string,render_data:RenderData){
   const {fields}=render_data
   const content=`
 <html>
-  <style>${style}</style>
+  <style>${style+styleh}</style>
   ${render_breadcrumbs(render_data)} 
   ${logit({fields})}
   ${center},

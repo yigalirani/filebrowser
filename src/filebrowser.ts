@@ -3,6 +3,9 @@ import express, { Request, Response } from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
 import { get_error } from './utils';
+import hljs from 'highlight.js'
+
+
 import {
   MyStats, 
   logit, 
@@ -85,7 +88,9 @@ try{
     }
     if (['txt','py','cmd','js','ts','php','json'].includes(ext)){
       const txt=await fs.readFile(parent_absolute, 'utf8')
-      res.end(render_txt(txt,render_data))
+      const html = hljs.highlightAuto(txt).value
+      const code=`<pre>${html}</pre>`
+      res.end(render_page(code,render_data))
       return
     }
 
