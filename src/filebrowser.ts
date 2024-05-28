@@ -1,7 +1,7 @@
 
 import { promises as fs } from 'fs';
 import express,{Request, Response } from 'express';
-import {render_page,MyStats,logit,render_error_page} from './view'
+import {render_page,MyStats,logit,render_error_page,render_table_page} from './view'
 import {get_error} from './utils'
 import session from 'express-session';
 // @ts-ignore
@@ -50,11 +50,20 @@ async  function get(req:Request, res:Response){
       decoded_url
     }
 try{
-    const stats=await get_files({parent_absolute})
-    const content=render_page({stats,parent_absolute,fields,root_dir})
-    res.send(content)
+    const {is_dir,error}=await mystats({parent_absolute,base:''})
+    if (error){
+      res.end(render_error_page({error,fields,parent_absolute,root_dir}))
+    }
+    if (is_dir){
+      const stats=await get_files({parent_absolute})
+      const content=render_table_page({stats,parent_absolute,fields,root_dir})
+      res.end(content)
+      return
+    }
+    res.end(render_page({center:'todo render content of file',parent_absolute,fields,root_dir}))
   }catch(ex){
-    res.end(render_error_page({ex,fields}))
+    const error=get_error(ex)
+    res.end(render_error_page({error,parent_absolute,fields,root_dir}))
   }
 }
 app.get('/login',function get(req:Request, res:Response){

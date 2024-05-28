@@ -1,4 +1,4 @@
-import {formatBytes,timeSince,encode_path,get_error} from './utils'
+import {formatBytes,timeSince,encode_path} from './utils'
 import {encode} from 'html-entities'
 // @ts-ignore //is there a better way to import untyped?
 import style from './style.css'
@@ -120,31 +120,37 @@ function render_breadcrumbs({parent_absolute,root_dir}:{
   }
   return ans.join(' / ')
 }
-export function render_page({stats,fields,parent_absolute,root_dir}:{
+export function render_page({center,fields,parent_absolute,root_dir}:{
+  center:string,
+  fields:any
+  parent_absolute:string,
+  root_dir:string
+}){
+  const content=`
+<html>
+  <style>${style}</style>
+  ${render_breadcrumbs({parent_absolute,root_dir})} 
+  ${logit({fields})}
+  ${center},
+</html>`
+  return content
+}
+export function render_table_page({stats,fields,parent_absolute,root_dir}:{
   stats:MyStats[],
   fields:any
   parent_absolute:string,
   root_dir:string
 }){
-  const table=render_table(stats)
-  const content=`
-<html>
-  <style>${style}</style>
-  ${render_breadcrumbs({parent_absolute,root_dir})} 
-  ${logit({fields,stats})}
-  ${table},
-</html>`
-  return content
+  const center=render_table(stats)
+  return render_page({center,fields,parent_absolute,root_dir})
 }
-export function render_error_page({ex,fields}:{
-  ex:any
+
+export function render_error_page({error,fields,parent_absolute,root_dir}:{
+  error:string
   fields:any
+  parent_absolute:string
+  root_dir:string  
 }){
-  //looks unstable
-  const content=`<html> 
-  <style>${style}</style>
-  ${logit(fields)},
-  <div class=error>${get_error(ex)}</div>
-  </html>`    
-  return content
+  const center=`<div class=error>${error}</div>`
+  return render_page({center,fields,parent_absolute,root_dir})
 }
