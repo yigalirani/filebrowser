@@ -4,20 +4,15 @@ import express,{Request, Response } from 'express';
 import {formatBytes,timeSince} from './utils'
 import session from 'express-session';
 import {encode} from 'html-entities'
-// @ts-ignore //is there a better way to import untyped 
+// @ts-ignore //is there a better way to import untyped?
 import style from './style.css'
 // @ts-ignore
 import varlog from 'varlog';
 import path from 'node:path'
-/*
-teminology 
-* __dirname The directory name of the current module. 
-* base      last leg of a path
-* relative  full path relative to the _dir_name
-* absolute full path relative to to / can be either path or file
-* absolute_path 
-* absolute_file
-*/
+function root_dir(){
+  return '/yigal'//__dirname
+}
+
 const app = express();
 const port = 80
 const host =process.env.HOST||'0.0.0.0'
@@ -30,10 +25,8 @@ async function mystats({parent_absolute,base}:{ //absolute_path is a directory
   base:string
 }){
   const absolute=path.join(parent_absolute,base)
-  const relative=path.relative(__dirname,absolute) // will this throw?
+  const relative=path.relative(root_dir(),absolute) // will this throw?
   try{
-    
-    //console.log(fullpath)
     const stats = await fs.stat(absolute);
     const is_dir=stats.isDirectory()
     return {base,absolute,relative,...stats,is_dir}
@@ -46,7 +39,7 @@ async function get_files({parent_absolute}:{parent_absolute:string}){
   const files=await fs.readdir(parent_absolute)
   return await Promise.all(files.map(base=>mystats({parent_absolute,base}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
-function format_row(stats:MyStats){
+function format_row(stats:MyStats,cur_time:number){
   const {relative,base,error}=stats
   if (error!=undefined){
     return `<tr>
@@ -58,6 +51,7 @@ function format_row(stats:MyStats){
     </tr>`
   }
   const {size,mtimeMs,is_dir}=stats
+  const the_time_since=timeSince(cur_time-mtimeMs)
   if (is_dir){
     return `<tr>
       <td class=filename>
@@ -65,7 +59,7 @@ function format_row(stats:MyStats){
         <a href='/${encode(relative)}'>${encode(base)}</a>
       </td>
       <td></td>
-      <td>${timeSince(mtimeMs)}<td>
+      <td>${the_time_since}<td>
     </tr>`
   }
 
@@ -75,35 +69,34 @@ function format_row(stats:MyStats){
       ${encode(base)}
     </td>
     <td>${formatBytes(size)}</td>
-    <td>${timeSince(mtimeMs)}</td>
+    <td>${the_time_since}</td>
   </tr>`
 } 
 function  format_table(stats:MyStats[]){
-  const rows=stats.map(stats=>format_row(stats)).join('\n')
+  const cur_time=Date.now()
+  const rows=stats.map(stats=>format_row(stats,cur_time)).join('\n')
   return `<table>
   <tr>
     <th>filename</th>
     <th>size</th>
-    <th>last changed</th>
+    <th>changed</th>
   <tr>
     ${rows}
   </table>`
 }
 function logit(x:any){
-  return ''//varlog.css+varlog.dump('logit',x)
+  return varlog.css+varlog.dump('logit',x)
 }
 async  function get(req:Request, res:Response){
   const {url}=req
-  const parent_absolute=path.join(__dirname,url)
-  const parent_relative=path.relative(__dirname,parent_absolute)
+  const parent_absolute=path.join(root_dir(),url)
+  const parent_relative=path.relative(root_dir(),parent_absolute)
   var fields={
       parent_absolute,
-      __dirname,
+      root:root_dir(),
       parent_relative,
       url
     }
-  
-
 try{
     const stats=await get_files({parent_absolute})
     const table=format_table(stats)
@@ -122,7 +115,6 @@ try{
     <div class=error>${ex+''}</div>
   </html>`    
     res.end(content)
-    //res.send()
   }
 }
 app.get('/login',function get(req:Request, res:Response){
@@ -134,8 +126,6 @@ app.get('/login',function get(req:Request, res:Response){
   )  
 })
 app.get('*',get) 
-//app.get('/',get) 
-///app.get('/',get)
 async function run_app() {
   await app.listen(port,host)
   console.log(`started server at port=${port},host=${host}`)

@@ -4,8 +4,8 @@ export function timeSince(ms:number) {
   function render_ago(unit:string){
     const floored_interval=Math.floor(interval)
     if (floored_interval==0)
-      return floored_interval+' '+unit+' ago'
-    return floored_interval+' '+unit+'s ago'
+      return floored_interval+' '+unit
+    return floored_interval+' '+unit+'s'
   }
   if (interval >= 2)
     return render_ago("year");
