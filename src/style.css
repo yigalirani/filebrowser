@@ -1,10 +1,21 @@
 table td{
   background-color: #e6f3ff;
 }
+table th{
+  background-color: #fbedbe;
+  font-weight: normal;
+}
+body{
+  font-family: Arial, Helvetica, sans-serif;
+}
 .icon{
   display: inline;
-  width: 16px;
+  min-width: 30px;
+  text-align: center;  
 }
 .error{
   background-color: red;
+}
+.filename{
+  display: flex;
 }
