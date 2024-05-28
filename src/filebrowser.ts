@@ -49,21 +49,26 @@ async  function get(req:Request, res:Response){
       url,
       decoded_url
     }
+  const render_data={
+    parent_absolute,
+    root_dir,
+    fields
+  }
 try{
     const {is_dir,error}=await mystats({parent_absolute,base:''})
     if (error){
-      res.end(render_error_page({error,fields,parent_absolute,root_dir}))
+      res.end(render_error_page(error,render_data))
     }
     if (is_dir){
       const stats=await get_files({parent_absolute})
-      const content=render_table_page({stats,parent_absolute,fields,root_dir})
+      const content=render_table_page(stats,render_data)
       res.end(content)
       return
     }
-    res.end(render_page({center:'todo render content of file',parent_absolute,fields,root_dir}))
+    res.end(render_page('todo render content of file',render_data))
   }catch(ex){
     const error=get_error(ex)
-    res.end(render_error_page({error,parent_absolute,fields,root_dir}))
+    res.end(render_error_page(error,render_data))
   }
 }
 app.get('/login',function get(req:Request, res:Response){

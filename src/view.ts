@@ -2,6 +2,11 @@ import {formatBytes,timeSince,encode_path} from './utils'
 import {encode} from 'html-entities'
 // @ts-ignore //is there a better way to import untyped?
 import style from './style.css'
+export interface RenderData{
+  fields:any
+  parent_absolute:string
+  root_dir:string
+}
 export type MyStats={
   is_dir: boolean;
   error: null;
@@ -101,10 +106,8 @@ export function logit(_x:any){
 function render_leg(absolute:string,base:string,extra_icon=''){
   return `<a href=${encode_path(absolute)}>${encode(base)+extra_icon}</a>`
 }
-function render_breadcrumbs({parent_absolute,root_dir}:{
-  root_dir:string,
-  parent_absolute:string
-}){
+function render_breadcrumbs(render_data:RenderData){
+  const {parent_absolute,root_dir}=render_data
   const ans:string[]=[]
   var acum=''
   for (const leg of parent_absolute.split('/')){
@@ -120,37 +123,23 @@ function render_breadcrumbs({parent_absolute,root_dir}:{
   }
   return ans.join(' / ')
 }
-export function render_page({center,fields,parent_absolute,root_dir}:{
-  center:string,
-  fields:any
-  parent_absolute:string,
-  root_dir:string
-}){
+export function render_page(center:string,render_data:RenderData){
+  const {fields}=render_data
   const content=`
 <html>
   <style>${style}</style>
-  ${render_breadcrumbs({parent_absolute,root_dir})} 
+  ${render_breadcrumbs(render_data)} 
   ${logit({fields})}
   ${center},
 </html>`
   return content
 }
-export function render_table_page({stats,fields,parent_absolute,root_dir}:{
-  stats:MyStats[],
-  fields:any
-  parent_absolute:string,
-  root_dir:string
-}){
+export function render_table_page(stats:MyStats[],render_data:RenderData){
   const center=render_table(stats)
-  return render_page({center,fields,parent_absolute,root_dir})
+  return render_page(center,render_data)
 }
 
-export function render_error_page({error,fields,parent_absolute,root_dir}:{
-  error:string
-  fields:any
-  parent_absolute:string
-  root_dir:string  
-}){
+export function render_error_page(error:string,render_data:RenderData){
   const center=`<div class=error>${error}</div>`
-  return render_page({center,fields,parent_absolute,root_dir})
+  return render_page(center,render_data)
 }
