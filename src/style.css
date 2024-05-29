@@ -25,3 +25,7 @@ body{
   padding: 10px;
   width: fit-content;
 }
+.inactive_leg{
+  display: inline;
+  color:gray;
+}

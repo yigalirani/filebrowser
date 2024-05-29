@@ -2,7 +2,7 @@
 import express, { Request, Response } from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import { get_error } from './utils';
+import {get_error,parse_path_root,RenderData} from './utils';
 import hljs from 'highlight.js'
 
 
@@ -13,10 +13,9 @@ import {
   render_image, 
   render_page, 
   render_table_page,
-  render_txt
 } from './view';
 import { marked } from 'marked'
-// @ts-ignore
+
 import path from 'node:path';
 const {posix}=path
 const root_dir='/'
@@ -61,12 +60,18 @@ async  function get(req:Request, res:Response){
       url,
       decoded_url
     }
-  const render_data={
+  const render_data:RenderData={
     parent_absolute,
     root_dir,
     fields,
-    is_dark:false
+    is_dark:false,
   }
+  render_data.legs=parse_path_root(render_data) //calculated here because on this file (the 'controler') is alowed to redirect
+  if (render_data.legs==undefined){
+    res.redirect("/")
+    return
+  }
+
 try{
     const {is_dir,error}=await mystats({parent_absolute,base:''})
     if (error){
@@ -86,7 +91,9 @@ try{
     if (['md'].includes(ext)){
       const txt=await fs.readFile(parent_absolute, 'utf8')
       res.end(render_page(await marked.parse(txt),render_data))
+      return
     }
+	// tryied showing pdf buy columnt find any stand alone npm packages that does this
     if (hjs_langs.includes(ext)){
       const txt=await fs.readFile(parent_absolute, 'utf8')
       const html = hljs.highlight(ext,txt).value

@@ -1,4 +1,4 @@
-import {formatBytes,timeSince,encode_path} from './utils'
+import {LegType,formatBytes,timeSince,encode_path,RenderData} from './utils'
 import {encode} from 'html-entities'
 
 import style from './style.css'
@@ -6,12 +6,7 @@ import style_dark from './style_dark.css'
 import styleh from 'highlight.js/styles/github.css';
 import styleh_dark from 'highlight.js/styles/github-dark.css';
 
-export interface RenderData{
-  fields:any
-  parent_absolute:string
-  root_dir:string
-  is_dark:boolean
-}
+
 export type MyStats={
   is_dir: boolean;
   error: null;
@@ -44,14 +39,9 @@ export type MyStats={
   is_dir: undefined;
 }
 
-const HOME_ICON=`<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="2" y="2" width="12" height="8" rx="1" ry="1" fill="#87CEEB" stroke="#4682B4" stroke-width="1"/>
-<rect x="5" y="11" width="6" height="1" fill="#4682B4"/>
-<rect x="4" y="12" width="8" height="2" rx="1" ry="1" fill="#4682B4"/>
-<circle cx="8" cy="13" r="0.5" fill="#FFFFFF"/>
-<text x="8" y="7" font-family="Arial" font-size="5" fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">/</text>
-</svg>`
-
+const HOME_ICON=` <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M8 1L1 7H3V15H6V10H10V15H13V7H15L8 1Z" stroke="black" stroke-width="1" fill="none"/>
+</svg> `
 function render_row(stats:MyStats,cur_time:number){
   const {base,error,relative,is_dir}=stats
   const icon=function(){
@@ -110,25 +100,28 @@ function  render_table(stats:MyStats[]){
 export function logit(_x:any){
   return ''//varlog.css+varlog.dump('logit',x,4)
 }
-function render_leg(absolute:string,base:string,extra_icon=''){
-  return `<a href=${encode_path(absolute)}>${encode(base)+extra_icon}</a>`
-}
+/*function render_leg(absolute:string,base:string,extra_icon=''){
+  return `<a href=${encode_path(absolute)}>${extra_icon}${encode(base)}</a> / `
+}*/
+
 function render_breadcrumbs(render_data:RenderData){
-  const {parent_absolute,root_dir}=render_data
-  const ans:string[]=[]
-  var acum=''
-  for (const leg of parent_absolute.split('/')){
-    acum+=leg+'/'
-    const render=function(){
-      if (acum==root_dir)
-        return render_leg(acum,leg,HOME_ICON)
-      if (acum.startsWith(root_dir))
-        return render_leg(acum,leg)
-      return `<div class=inactive>leg</div>`
+  const {legs}=render_data
+  const ans=[]
+  let href='/'
+  for (const {leg,leg_type} of legs!){ //is there a better way than using that asterics to assert non-null?
+    if (leg_type==LegType.Regular)
+      href+=leg+'/'    
+    const render_leg=function(){
+      switch(leg_type){
+        case LegType.Gray:return `<div class=inactive_leg>${leg} / </div>`
+        case LegType.Home:return `<a href='${href}'>${HOME_ICON} ${leg} </a> /`
+        case LegType.Regular:return `<a href='${href}'> ${leg} </a> /`
+      }
     }()
-    ans.push(render)
+
+    ans.push(render_leg)
   }
-  return ans.join(' / ')
+  return ans.join('')
 }
 export function render_page(center:string,render_data:RenderData){
   const {fields,is_dark}=render_data
@@ -139,7 +132,7 @@ export function render_page(center:string,render_data:RenderData){
   <style>${effective_style}</style>
   ${render_breadcrumbs(render_data)} 
   ${logit({fields})}
-  ${center},
+  ${center}
 </html>`
   return content
 }

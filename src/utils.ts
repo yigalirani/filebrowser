@@ -54,3 +54,45 @@ export function to_posix(url:string){
 export function get_error(ex:any):string{
   return ex.toString().split(/:|,/)[2] 
 }
+function get_legs(path:string){
+  return ['',...path.split('/').filter(Boolean)]
+}
+export enum LegType {
+  Regular,
+  Home,
+  Gray,
+}
+/*interface PathLeg{
+  leg:string
+  leg_type:LegType
+}*/
+
+export interface RenderData{
+  fields:any
+  parent_absolute:string
+  root_dir:string
+  is_dark:boolean
+  legs?:{leg:string,leg_type:LegType}[]
+}
+export function parse_path_root(render_data:RenderData){
+  const {parent_absolute,root_dir}=render_data
+  const ans=[]
+  const parent_absolute_legs=get_legs(parent_absolute)
+  const root_dir_legs=get_legs(root_dir)
+  for (let i=0;i<parent_absolute_legs.length;i++){
+    const leg=parent_absolute_legs[i]!
+    if (parent_absolute_legs[i]!=root_dir_legs[i]&&root_dir_legs[i]!=undefined){
+      console.warn('path dot not extend root')
+      return
+    }
+    const leg_type=function(){
+      if (i+1==root_dir_legs.length)
+        return LegType.Home
+      if (i+1>root_dir_legs.length)
+        return LegType.Regular
+      return LegType.Gray
+    }()
+    ans.push({leg,leg_type})
+  }
+  return ans
+}
