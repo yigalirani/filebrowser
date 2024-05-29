@@ -64,7 +64,7 @@ async  function get(req:Request, res:Response){
     parent_absolute,
     root_dir,
     fields,
-    is_dark:false,
+    is_dark:true,
   }
   render_data.legs=parse_path_root(render_data) //calculated here because on this file (the 'controler') is alowed to redirect
   if (render_data.legs==undefined){

@@ -42,6 +42,11 @@ export type MyStats={
 const HOME_ICON=` <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M8 1L1 7H3V15H6V10H10V15H13V7H15L8 1Z"  stroke-width="1" fill="none"/>
 </svg> `
+const DOWNLOAD_ICON=`<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M8 1V11"  stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M5 8L8 11L11 8"  stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="3" y="13" width="10" height="0.5" />
+</svg>`
 function render_row(stats:MyStats,cur_time:number){
   const {base,error,relative,is_dir}=stats
   const icon=function(){
@@ -77,7 +82,7 @@ function render_row(stats:MyStats,cur_time:number){
 
   return `<tr>
     ${file_name}
-    <td><a href="/static/${encode_path(relative)}" download>download</a></td>
+    <td><a href="/static/${encode_path(relative)}" download>${DOWNLOAD_ICON}</a></td>
     <td>${formatBytes(size)}</td>
     <td>${the_time_since}</td>
   </tr>`
