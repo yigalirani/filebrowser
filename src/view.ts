@@ -77,7 +77,7 @@ function render_row(stats:MyStats,cur_time:number){
 
   return `<tr>
     ${file_name}
-    <td></td>
+    <td><a href="/static/${encode_path(relative)}" download>download</a></td>
     <td>${formatBytes(size)}</td>
     <td>${the_time_since}</td>
   </tr>`
