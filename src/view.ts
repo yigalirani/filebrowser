@@ -1,13 +1,16 @@
 import {formatBytes,timeSince,encode_path} from './utils'
 import {encode} from 'html-entities'
-// @ts-ignore //is there a better way to import untyped?
+
 import style from './style.css'
-// @ts-ignore
+import style_dark from './style_dark.css'
 import styleh from 'highlight.js/styles/github.css';
+import styleh_dark from 'highlight.js/styles/github-dark.css';
+
 export interface RenderData{
   fields:any
   parent_absolute:string
   root_dir:string
+  is_dark:boolean
 }
 export type MyStats={
   is_dir: boolean;
@@ -128,10 +131,12 @@ function render_breadcrumbs(render_data:RenderData){
   return ans.join(' / ')
 }
 export function render_page(center:string,render_data:RenderData){
-  const {fields}=render_data
+  const {fields,is_dark}=render_data
+  const effective_style=is_dark?style_dark+styleh_dark:style+styleh
+
   const content=`
 <html>
-  <style>${style+styleh}</style>
+  <style>${effective_style}</style>
   ${render_breadcrumbs(render_data)} 
   ${logit({fields})}
   ${center},

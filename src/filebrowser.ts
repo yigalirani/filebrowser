@@ -24,7 +24,7 @@ const root_dir='/'
 const app = express();
 const port = 80
 const host =process.env.HOST||'0.0.0.0'
-
+const hjs_langs=['xml','yaml','java','txt','py','cmd','js','ts','php','json','html','ini','c','cpp','h','Dockerfile','css','dos','bat','cmd']
 app.use(express.static('static'))
 app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
 app.use(express.static('media')) 
@@ -64,7 +64,8 @@ async  function get(req:Request, res:Response){
   const render_data={
     parent_absolute,
     root_dir,
-    fields
+    fields,
+    is_dark:false
   }
 try{
     const {is_dir,error}=await mystats({parent_absolute,base:''})
@@ -86,9 +87,9 @@ try{
       const txt=await fs.readFile(parent_absolute, 'utf8')
       res.end(render_page(await marked.parse(txt),render_data))
     }
-    if (['txt','py','cmd','js','ts','php','json'].includes(ext)){
+    if (hjs_langs.includes(ext)){
       const txt=await fs.readFile(parent_absolute, 'utf8')
-      const html = hljs.highlightAuto(txt).value
+      const html = hljs.highlight(ext,txt).value
       const code=`<pre>${html}</pre>`
       res.end(render_page(code,render_data))
       return

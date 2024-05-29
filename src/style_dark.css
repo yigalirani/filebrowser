@@ -1,0 +1,32 @@
+table td{
+  background-color: #052039;
+}
+table th{
+  background-color: #690303;
+  font-weight: normal;
+}
+body{
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: black;
+  color:white;
+}
+a{
+  color:white;
+}
+.icon{
+  display: inline;
+  min-width: 30px;
+  text-align: center;  
+}
+.error{
+  background-color: red;
+}
+.filename{
+  display: flex;
+}
+.info{
+  background-color: #1b2e0266;
+  display: block;
+  padding: 10px;
+  width: fit-content;
+}

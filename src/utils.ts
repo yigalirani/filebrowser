@@ -40,7 +40,7 @@ export function formatBytes(bytes: number, decimals = 2): string {
   return `${formattedBytes} ${size}`;
 } 
 export function encode_path(absolute:string){
-  console.log({absolute})
+  //console.log({absolute})
   const legs=posix.normalize(absolute).split('/').filter(Boolean)
   const ans= '/'+legs.map(encodeURI).join('/') //coulnt find any node api that does this
   return ans
