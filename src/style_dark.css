@@ -34,3 +34,6 @@ a{
   display: inline;
   color:gray;
 }
+svg{
+  stroke:white;
+}

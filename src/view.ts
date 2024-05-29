@@ -4,7 +4,7 @@ import {encode} from 'html-entities'
 import style from './style.css'
 import style_dark from './style_dark.css'
 import styleh from 'highlight.js/styles/github.css';
-import styleh_dark from 'highlight.js/styles/github-dark.css';
+import styleh_dark from 'highlight.js/styles/gradient-dark.css';
 
 
 export type MyStats={
@@ -40,7 +40,7 @@ export type MyStats={
 }
 
 const HOME_ICON=` <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M8 1L1 7H3V15H6V10H10V15H13V7H15L8 1Z" stroke="black" stroke-width="1" fill="none"/>
+  <path d="M8 1L1 7H3V15H6V10H10V15H13V7H15L8 1Z"  stroke-width="1" fill="none"/>
 </svg> `
 function render_row(stats:MyStats,cur_time:number){
   const {base,error,relative,is_dir}=stats

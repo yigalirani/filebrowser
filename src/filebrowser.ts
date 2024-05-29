@@ -23,7 +23,7 @@ const root_dir='/'
 const app = express();
 const port = 80
 const host =process.env.HOST||'0.0.0.0'
-const hjs_langs=['xml','yaml','java','txt','py','cmd','js','ts','php','json','html','ini','c','cpp','h','Dockerfile','css','dos','bat','cmd']
+const hjs_langs=['mjs','mts','xml','yaml','yml','java','txt','py','cmd','js','ts','php','json','html','ini','c','cpp','h','Dockerfile','css','dos','bat','cmd']
 app.use(express.static('static'))
 app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
 app.use(express.static('media')) 

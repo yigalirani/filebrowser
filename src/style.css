@@ -29,3 +29,6 @@ body{
   display: inline;
   color:gray;
 }
+svg{
+  stroke:black;
+}
