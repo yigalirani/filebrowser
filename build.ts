@@ -18,6 +18,8 @@ esbuild.build({
   bundle: true,
   outdir: './dist',
   sourcemap: true,
+  target: 'node10',
+  minifySyntax:true, 
   plugins:[
     CSSMinifyPlugin
   ],

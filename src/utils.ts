@@ -74,6 +74,17 @@ export interface RenderData{
   is_dark:boolean
   legs?:{leg:string,leg_type:LegType}[]
 }
+import hljs from 'highlight.js'
+const langs=hljs.listLanguages()
+console.log('langs',langs)
+export function highlightit({ext,txt}:{
+  ext:string
+  txt:string
+}){
+  if (langs.includes(ext))
+    return hljs.highlight(ext,txt).value
+  return hljs.highlightAuto(txt).value
+}
 export function parse_path_root(render_data:RenderData){
   const {parent_absolute,root_dir}=render_data
   const ans=[]

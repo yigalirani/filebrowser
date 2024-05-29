@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "allowArbitraryExtensions":true,
-    "target": "es2022",
+    "target": "es2017",
     "lib": [
-       "ES2023"
+       "es2018"
     ],
     "moduleResolution": "node",
     "resolveJsonModule": true,
@@ -30,6 +30,5 @@
     // "Go to Definition" in VSCode
     "declarationMap": true,
   },
-  "lib": ["ES2023"],
   "exclude": ["node_modules", "dist","tmp"]
 }

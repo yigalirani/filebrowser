@@ -2,8 +2,8 @@
 import express, { Request, Response } from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,RenderData} from './utils';
-import hljs from 'highlight.js'
+import {get_error,parse_path_root,RenderData,highlightit} from './utils';
+
 
 
 import {
@@ -94,13 +94,14 @@ try{
       return
     }
 	// tryied showing pdf buy columnt find any stand alone npm packages that does this
-    if (hjs_langs.includes(ext)){
+    // eslint-disable-next-line no-constant-condition
+    //if (hjs_langs.includes(ext)){
       const txt=await fs.readFile(parent_absolute, 'utf8')
-      const html = hljs.highlight(ext,txt).value
+      const html = highlightit({ext,txt})
       const code=`<pre>${html}</pre>`
       res.end(render_page(code,render_data))
       return
-    }
+    //}
 
     res.end(render_page('<div class=info>todo render content of file</div>',render_data))
   }catch(ex){
