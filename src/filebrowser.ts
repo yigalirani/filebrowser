@@ -27,20 +27,23 @@ const host =process.env.HOST||'0.0.0.0'
 app.use(express.static('static'))
 app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
 app.use(express.static('media')) 
-const image_ext=['jpg','gif','svg','png']
+
 async function mystats({parent_absolute,base}:{ //absolute_path is a directory
   parent_absolute:string,
   base:string
 }):Promise<MyStats>{
   const absolute=posix.join(parent_absolute,base)
   const relative=posix.relative(root_dir,absolute) //is this needed?
+  const base2=posix.basename(absolute)
+  const format= guessFileFormat(base2)
   try{
-    const base2=posix.basename(absolute)
+   
     const stats = await fs.stat(absolute);
     const is_dir=stats.isDirectory()
-    return {base:base2,absolute,relative,...stats,is_dir,error:null}
+    
+    return {base:base2,format,absolute,relative,...stats,is_dir,error:null}
   }catch(ex){
-    return {base,absolute,relative,error:get_error(ex),is_dir:undefined}
+    return {base,format,absolute,relative,error:get_error(ex),is_dir:undefined}
   } 
 }
 //export type MyStats = Awaited<ReturnType<typeof mystats>>
@@ -65,7 +68,7 @@ async  function get(req:Request, res:Response){
     parent_absolute,
     root_dir,
     fields,
-    is_dark:true,
+    is_dark:true
   }
   render_data.legs=parse_path_root(render_data) //calculated here because on this file (the 'controler') is alowed to redirect
   if (render_data.legs==undefined){
@@ -74,7 +77,7 @@ async  function get(req:Request, res:Response){
   }
 
 try{
-    const {is_dir,error,base}=await mystats({parent_absolute,base:''})
+    const {is_dir,error,base,format}=await mystats({parent_absolute,base:''})
     if (error){
       res.end(render_error_page(error,render_data))
     }
@@ -84,13 +87,13 @@ try{
       res.end(content)
       return
     }
-    const ext=path.extname(parent_absolute).toLowerCase().replace('.','')
-    if (image_ext.includes(ext)){
+
+     if (format=='image'){
       res.end(render_image(render_data))
       return
     }
 
-    const format= guessFileFormat(base)
+    //const format= guessFileFormat(base)
     if (format==null){
       res.end(render_page('<div class=info>unrecogrnized format,todo: render anyway</div>',render_data))
       return
@@ -100,8 +103,9 @@ try{
       res.end(render_page(await marked.parse(txt),render_data))
       return
     }    
-    const html=await hljs.highlight(format,txt).value
-    res.end(render_page(`<pre>${html}</pre>`,render_data))
+    const {value,language}=await hljs.highlight(format,txt)
+    render_data.language=language
+    res.end(render_page(`<pre>${value}</pre>`,render_data))
 
   }catch(ex){
     const error=get_error(ex)

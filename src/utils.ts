@@ -73,6 +73,7 @@ export interface RenderData{
   root_dir:string
   is_dark:boolean
   legs?:{leg:string,leg_type:LegType}[]
+  language?:string
 }
 
 //const langs=hljs.listLanguages()

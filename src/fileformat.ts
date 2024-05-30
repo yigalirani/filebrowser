@@ -203,7 +203,7 @@ const extensionToFormat:Record<string,string> = {
   'vala': 'vala',
   'vb': 'vbnet',
   'vbs': 'vbscript',
-  'html': 'vbscript-html',
+  'html': 'html',
   'v': 'verilog',
   'vhdl': 'vhdl',
   'vim': 'vim',
@@ -212,9 +212,9 @@ const extensionToFormat:Record<string,string> = {
   'asm': 'x86asm',
   'xl': 'xl',
   'xq': 'xquery',
-  'zep': 'zephir'
+  'zep': 'zephir',
 };
-
+const image_ext=['jpg','gif','svg','png','ico']
 export function guessFileFormat(fileName:string) {
   const lowerFileName = fileName.toLowerCase();
   const exists=specialFiles[lowerFileName]
@@ -223,5 +223,7 @@ export function guessFileFormat(fileName:string) {
   const extension = lowerFileName.split('.').slice(-1)[0]
   if (extension==null)
     return
+  if (image_ext.includes(extension))
+    return 'image'  
   return extensionToFormat[extension]
 }

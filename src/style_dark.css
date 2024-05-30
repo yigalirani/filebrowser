@@ -19,16 +19,22 @@ a{
   text-align: center;  
 }
 .error{
-  background-color: red;
+  background-color: #952828;
 }
+.error_txt{
+  display:contents;  
+  color: #ffafaf;
+}
+
 .filename{
   display: flex;
 }
 .info{
-  background-color: #1b2e0266;
+  background-color: #274302;
   display: block;
   padding: 10px;
   width: fit-content;
+  margin: 5;
 }
 .inactive_leg{
   display: inline;
@@ -37,4 +43,9 @@ a{
 svg{
   stroke:white;
   fill:white;
+}
+.comment{
+  display: flex;
+  display: inline;
+  margin-left: 40px;
 }

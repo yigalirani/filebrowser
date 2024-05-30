@@ -31,12 +31,14 @@ export type MyStats={
   base: string;
   absolute: string;
   relative: string;
+  format?:string;
 } | {
   base: string;
   absolute: string;
   relative: string;
   error: string;
   is_dir: undefined;
+  format?:string;
 }
 
 const HOME_ICON=` <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -48,7 +50,7 @@ const DOWNLOAD_ICON=`<svg width="16" height="16" viewBox="0 0 16 16" fill="none"
 <rect x="3" y="13" width="10" height="0.5" />
 </svg>`
 function render_row(stats:MyStats,cur_time:number){
-  const {base,error,relative,is_dir}=stats
+  const {base,error,relative,is_dir,format}=stats
   const icon=function(){
     if (error!=null)
       return '&#x274C;'
@@ -64,7 +66,7 @@ function render_row(stats:MyStats,cur_time:number){
   }()
   if (error!=null){
     return `<tr> ${file_name}
-      <td>${encode(error)}</td>
+      <td ></td><td><div class=error_txt>${encode(error)}</div></td>
       <td></td>
       <td></td>
     </tr>`
@@ -76,13 +78,14 @@ function render_row(stats:MyStats,cur_time:number){
       ${file_name}
       <td></td>
       <td></td>
+      <td></td>
       <td>${the_time_since}<td>
     </tr>`
   }
 
   return `<tr>
     ${file_name}
-    <td><a href="/static/${encode_path(relative)}" download>${DOWNLOAD_ICON}</a></td>
+    <td><a href="/static/${encode_path(relative)}" download>${DOWNLOAD_ICON}</a></td><td>${format||''}</td>
     <td>${formatBytes(size)}</td>
     <td>${the_time_since}</td>
   </tr>`
@@ -96,6 +99,7 @@ function  render_table(stats:MyStats[]){
   <tr>
     <th>filename</th>
     <th></th>
+    <th>type</th>
     <th>size</th>
     <th>changed</th>
   <tr>
@@ -110,7 +114,7 @@ export function logit(_x:any){
 }*/
 
 function render_breadcrumbs(render_data:RenderData){
-  const {legs}=render_data
+  const {legs,language}=render_data
   const ans=[]
   let href='/'
   for (const {leg,leg_type} of legs!){ //is there a better way than using that asterics to assert non-null?
@@ -126,6 +130,8 @@ function render_breadcrumbs(render_data:RenderData){
 
     ans.push(render_leg)
   }
+  if (language)
+    ans.push(`<div class=comment>(${language})</div>`)
   return ans.join('')
 }
 export function render_page(center:string,render_data:RenderData){
@@ -134,6 +140,11 @@ export function render_page(center:string,render_data:RenderData){
 
   const content=`
 <html>
+<link rel="icon" type="image/png" sizes="16x16" href="data:image/png;base64,
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAMFBMVEU0OkArMjhobHEoPUPFEBIu
+O0L+AAC2FBZ2JyuNICOfGx7xAwTjCAlCNTvVDA1aLzQ3COjMAAAAVUlEQVQI12NgwAaCDSA0888G
+CItjn0szWGBJTVoGSCjWs8TleQCQYV95evdxkFT8Kpe0PLDi5WfKd4LUsN5zS1sKFolt8bwAZrCa
+GqNYJAgFDEpQAAAzmxafI4vZWwAAAABJRU5ErkJggg==" />
   <style>${effective_style}</style>
   ${render_breadcrumbs(render_data)} 
   ${logit({fields})}
