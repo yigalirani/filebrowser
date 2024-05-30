@@ -4,7 +4,7 @@ import {encode} from 'html-entities'
 import style from './style.css'
 import style_dark from './style_dark.css'
 import styleh from 'highlight.js/styles/github.css';
-import styleh_dark from 'highlight.js/styles/gradient-dark.css';
+//import styleh_dark from 'highlight.js/styles/github-dark.css';
 
 
 export type MyStats={
@@ -136,7 +136,7 @@ function render_breadcrumbs(render_data:RenderData){
 }
 export function render_page(center:string,render_data:RenderData){
   const {fields,is_dark}=render_data
-  const effective_style=is_dark?style_dark+styleh_dark:style+styleh
+  const effective_style=is_dark?style_dark:style+styleh
 
   const content=`
 <html>
