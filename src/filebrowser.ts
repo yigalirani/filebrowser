@@ -2,8 +2,9 @@
 import express, { Request, Response } from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,RenderData,highlightit} from './utils';
-
+import {get_error,parse_path_root,RenderData} from './utils';
+import {guessFileFormat} from './fileformat'
+import hljs from 'highlight.js'
 
 
 import {
@@ -23,7 +24,6 @@ const root_dir='/'
 const app = express();
 const port = 80
 const host =process.env.HOST||'0.0.0.0'
-const hjs_langs=['mjs','mts','xml','yaml','yml','java','txt','py','cmd','js','ts','php','json','html','ini','c','cpp','h','Dockerfile','css','dos','bat','cmd']
 app.use(express.static('static'))
 app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
 app.use(express.static('media')) 
@@ -35,9 +35,10 @@ async function mystats({parent_absolute,base}:{ //absolute_path is a directory
   const absolute=posix.join(parent_absolute,base)
   const relative=posix.relative(root_dir,absolute) //is this needed?
   try{
+    const base2=posix.basename(absolute)
     const stats = await fs.stat(absolute);
     const is_dir=stats.isDirectory()
-    return {base,absolute,relative,...stats,is_dir,error:null}
+    return {base:base2,absolute,relative,...stats,is_dir,error:null}
   }catch(ex){
     return {base,absolute,relative,error:get_error(ex),is_dir:undefined}
   } 
@@ -73,7 +74,7 @@ async  function get(req:Request, res:Response){
   }
 
 try{
-    const {is_dir,error}=await mystats({parent_absolute,base:''})
+    const {is_dir,error,base}=await mystats({parent_absolute,base:''})
     if (error){
       res.end(render_error_page(error,render_data))
     }
@@ -88,22 +89,20 @@ try{
       res.end(render_image(render_data))
       return
     }
-    if (['md'].includes(ext)){
-      const txt=await fs.readFile(parent_absolute, 'utf8')
-      res.end(render_page(await marked.parse(txt),render_data))
+
+    const format= guessFileFormat(base)
+    if (format==null){
+      res.end(render_page('<div class=info>unrecogrnized format,todo: render anyway</div>',render_data))
       return
     }
-	// tryied showing pdf buy columnt find any stand alone npm packages that does this
-    // eslint-disable-next-line no-constant-condition
-    //if (hjs_langs.includes(ext)){
-      const txt=await fs.readFile(parent_absolute, 'utf8')
-      const html = highlightit({ext,txt})
-      const code=`<pre>${html}</pre>`
-      res.end(render_page(code,render_data))
+    const txt=await fs.readFile(parent_absolute, 'utf8') 
+    if (format=='markdown'){
+      res.end(render_page(await marked.parse(txt),render_data))
       return
-    //}
+    }    
+    const html=await hljs.highlight(format,txt).value
+    res.end(render_page(`<pre>${html}</pre>`,render_data))
 
-    res.end(render_page('<div class=info>todo render content of file</div>',render_data))
   }catch(ex){
     const error=get_error(ex)
     res.end(render_error_page(error,render_data))
