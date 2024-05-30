@@ -88,10 +88,20 @@ try{
       return
     }
 
-     if (format=='image'){
+    if (format=='image'){
       res.end(render_image(render_data))
       return
     }
+    if (format=='video'){
+      const content=`<br><video controls>
+      <source src="/static/${parent_absolute}" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>`
+      res.end(render_page(content,render_data))
+      return
+    }
+
+     
 
     //const format= guessFileFormat(base)
     if (format==null){

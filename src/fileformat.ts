@@ -215,6 +215,7 @@ const extensionToFormat:Record<string,string> = {
   'zep': 'zephir',
 };
 const image_ext=['jpg','gif','svg','png','ico']
+const video_ext=['mp4','avi','mkv']
 export function guessFileFormat(fileName:string) {
   const lowerFileName = fileName.toLowerCase();
   const exists=specialFiles[lowerFileName]
@@ -225,5 +226,7 @@ export function guessFileFormat(fileName:string) {
     return
   if (image_ext.includes(extension))
     return 'image'  
+  if (video_ext.includes(extension))
+    return 'video'  
   return extensionToFormat[extension]
 }
