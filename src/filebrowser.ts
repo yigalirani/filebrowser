@@ -4,6 +4,7 @@ import session from 'express-session';
 import { promises as fs } from 'fs';
 import {get_error,parse_path_root,RenderData} from './utils';
 import {guessFileFormat} from './fileformat'
+import {password_protect} from './pass'
 import hljs from 'highlight.js'
 
 
@@ -26,7 +27,8 @@ const port = 80
 const host =process.env.HOST||'0.0.0.0'
 app.use(express.static('static'))
 app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
-app.use(express.static('media')) 
+app.use(express.urlencoded({ extended: false }));
+app.use(password_protect('a'))
 
 async function mystats({parent_absolute,base}:{ //absolute_path is a directory
   parent_absolute:string,
@@ -123,11 +125,7 @@ try{
   }
 }
 app.use('/static',express.static('/'))
-app.get('/login',function get(req:Request, res:Response){
-  res.end(
-    '<h1>login</h1>'+logit({req,res})
-  )  
-})
+
 app.get('*',get) 
 async function run_app() {
   await app.listen(port,host)
