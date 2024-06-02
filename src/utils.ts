@@ -11,13 +11,13 @@ export function timeSince(ms:number) {
     return floored_interval+' '+unit+'s'
   }
   if (interval >= 2)
-    return render_ago("year");
+    return render_ago('year');
   interval = seconds / 2592000;
   if (interval >= 2) 
-    return render_ago("month");
+    return render_ago('month');
   interval = seconds / 86400;
   if (interval >= 1) 
-    return render_ago("day");
+    return render_ago('day');
   interval = seconds / 3600;
   if (interval > 1) 
     return render_ago('hour')

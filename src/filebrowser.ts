@@ -6,11 +6,11 @@ import {get_error,parse_path_root,RenderData} from './utils';
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
 import hljs from 'highlight.js'
+import {read_config} from './config'
 
 
 import {
   MyStats, 
-  logit, 
   render_error_page, 
   render_image, 
   render_page, 
@@ -20,19 +20,12 @@ import { marked } from 'marked'
 
 import path from 'node:path';
 const {posix}=path
-const root_dir='/'
 
-const app = express();
-const port = 80
-const host =process.env.HOST||'0.0.0.0'
-app.use(express.static('static'))
-app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
-app.use(express.urlencoded({ extended: false }));
-app.use(password_protect('a'))
 
-async function mystats({parent_absolute,base}:{ //absolute_path is a directory
+async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a directory
   parent_absolute:string,
-  base:string
+  base:string,
+  root_dir:string
 }):Promise<MyStats>{
   const absolute=posix.join(parent_absolute,base)
   const relative=posix.relative(root_dir,absolute) //is this needed?
@@ -49,13 +42,17 @@ async function mystats({parent_absolute,base}:{ //absolute_path is a directory
   } 
 }
 //export type MyStats = Awaited<ReturnType<typeof mystats>>
-async function get_files({parent_absolute}:{parent_absolute:string}){
+async function get_files({parent_absolute,root_dir}:{
+  parent_absolute:string,
+  root_dir:string
+}){
   const files=await fs.readdir(parent_absolute)
-  return await Promise.all(files.map(base=>mystats({parent_absolute,base}))) //thank you https://stackoverflow.com/a/40140562/39939
+  return await Promise.all(files.map(base=>mystats({parent_absolute,base,root_dir}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
 
 async  function get(req:Request, res:Response){
   const {url}=req
+  const root_dir=req.app.locals.root_dir;
   const decoded_url=decodeURI(url)
   const parent_absolute=posix.join(root_dir,decoded_url)
   const parent_relative=posix.relative(root_dir,parent_absolute)
@@ -74,17 +71,17 @@ async  function get(req:Request, res:Response){
   }
   render_data.legs=parse_path_root(render_data) //calculated here because on this file (the 'controler') is alowed to redirect
   if (render_data.legs==undefined){
-    res.redirect("/")
+    res.redirect('/')
     return
   }
 
 try{
-    const {is_dir,error,base,format}=await mystats({parent_absolute,base:''})
+    const {is_dir,error,format}=await mystats({parent_absolute,base:'',root_dir})
     if (error){
       res.end(render_error_page(error,render_data))
     }
     if (is_dir){
-      const stats=await get_files({parent_absolute})
+      const stats=await get_files({parent_absolute,root_dir})
       const content=render_table_page(stats,render_data)
       res.end(content)
       return
@@ -124,12 +121,26 @@ try{
     res.end(render_error_page(error,render_data))
   }
 }
-app.use('/static',express.static('/'))
 
-app.get('*',get) 
 async function run_app() {
-  await app.listen(port,host)
-  console.log(`started server at port=${port},host=${host}`)
+  try{
+    const config=await read_config('./filebrowser.json')
+    const {port}=config
+    const host='0.0.0.0' //should read this from config file
+    const app = express();
+    app.locals.root_dir=config.root_dir
+ 
+    app.use(express.static('static'))
+    app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
+    app.use(express.urlencoded({ extended: false }));
+    app.use(password_protect(config.password))    
+    app.use('/static',express.static('/'))
+    app.get('*',get)   
+    await app.listen(port,host)      
+    console.log(`started server at port=${port},host=${host}`)
+  }catch(ex){
+    console.warn('error string server',ex)
+  }
 }
 
 run_app()

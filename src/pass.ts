@@ -2,11 +2,17 @@ import { Request, Response, NextFunction } from 'express';
 
 declare module 'express-session' {
   interface SessionData {
-    authenticated: boolean;
+    authenticated: boolean
   }
 }
 
-export function password_protect(app_password:string){
+export function password_protect(app_password:string|undefined){
+  if (!app_password){
+    console.warn('running filebrowser without a password')
+    return function(req:Request, res:Response, next:NextFunction) {
+      next()
+    }
+  }
   return  function (req:Request, res:Response, next:NextFunction) {
     if (req.url=='/logout'){
       req.session.authenticated = false;
