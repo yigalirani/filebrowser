@@ -43,7 +43,7 @@ a{
 }
 svg{
   stroke:white;
-  fill:white;
+  fill:rgb(12, 11, 56);
 }
 .comment{
   display: flex;

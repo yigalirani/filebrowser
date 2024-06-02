@@ -7,6 +7,8 @@ import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
 import hljs from 'highlight.js'
 import {read_config} from './config'
+import http from 'http'
+import https from 'https'
 
 
 import {
@@ -67,7 +69,7 @@ async  function get(req:Request, res:Response){
     parent_absolute,
     root_dir,
     fields,
-    is_dark:true
+    is_dark:false
   }
   render_data.legs=parse_path_root(render_data) //calculated here because on this file (the 'controler') is alowed to redirect
   if (render_data.legs==undefined){
@@ -125,7 +127,7 @@ try{
 async function run_app() {
   try{
     const config=await read_config('./filebrowser.json')
-    const {port}=config
+    const {port,protocol,cert_content:cert,key_content:key}=config
     const host='0.0.0.0' //should read this from config file
     const app = express();
     app.locals.root_dir=config.root_dir
@@ -136,7 +138,12 @@ async function run_app() {
     app.use(password_protect(config.password))    
     app.use('/static',express.static('/'))
     app.get('*',get)   
-    await app.listen(port,host)      
+    const server= await async function(){
+      if (protocol=='https')
+        return await https.createServer({cert,key}, app)
+      return await http.createServer(app);
+    }()
+    await server.listen(port,host)      
     console.log(`started server at port=${port},host=${host}`)
   }catch(ex){
     console.warn('error string server',ex)

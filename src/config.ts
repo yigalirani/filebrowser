@@ -37,7 +37,7 @@ export async function read_config(filePath: string) {
     key_content:await readFileIfExists(config.key,'key'),
     cert_content:await readFileIfExists(config.cert,'cert'),
   };
-  if (ans.protocol=='https' || ans.key_content==undefined|| ans.cert_content==undefined){
+  if (ans.protocol=='https' &&( ans.key_content==undefined|| ans.cert_content==undefined)){
     console.warn('protocol is https, but at least of of the certificate files are not found reverting to http')
     ans.protocol='http'
   }
