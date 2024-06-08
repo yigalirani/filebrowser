@@ -9,6 +9,7 @@ import hljs from 'highlight.js'
 import {read_config} from './config'
 import http from 'http'
 import https from 'https'
+import simpleGit from 'simple-git';
 
 
 import {
@@ -16,7 +17,7 @@ import {
   render_error_page, 
   render_image, 
   render_page, 
-  render_table_page,
+  render_table
 } from './view';
 import { marked } from 'marked'
 
@@ -52,6 +53,27 @@ async function get_files({parent_absolute,root_dir}:{
   return await Promise.all(files.map(base=>mystats({parent_absolute,base,root_dir}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
 
+async function get_git_info(parent_absolute:string){
+  try{
+    const git = simpleGit(parent_absolute);
+    const log = await git.log();
+    const commits = log.all; 
+    const rows=commits.map(function(commit){
+      const {hash,date,message}=commit
+      return `<tr><td>${date}</td><td>${hash}</td><td>${message}</td></tr>`
+    }).join('\n')
+    return `<table>
+    <tr>
+      <th>hash</th>
+      <th>date</th>
+      <th>message</th>
+    <tr>
+      ${rows}
+    </table>`
+  }catch(ex){
+    return ex+''
+  }
+}
 async  function get(req:Request, res:Response){
   const {url}=req
   const root_dir=req.app.locals.root_dir;
@@ -69,7 +91,7 @@ async  function get(req:Request, res:Response){
     parent_absolute,
     root_dir,
     fields,
-    is_dark:false
+    is_dark:true
   }
   render_data.legs=parse_path_root(render_data) //calculated here because on this file (the 'controler') is alowed to redirect
   if (render_data.legs==undefined){
@@ -84,8 +106,10 @@ try{
     }
     if (is_dir){
       const stats=await get_files({parent_absolute,root_dir})
-      const content=render_table_page(stats,render_data)
-      res.end(content)
+      const content_git=await get_git_info(parent_absolute)
+      const content=render_table(stats)
+
+      res.end(render_page(content_git+content,render_data))
       return
     }
 

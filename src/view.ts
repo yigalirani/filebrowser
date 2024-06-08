@@ -99,7 +99,7 @@ function render_row(stats:MyStats,cur_time:number){
     <td>${the_time_since}</td>
   </tr>`
 } 
-function  render_table(stats:MyStats[]){
+export function  render_table(stats:MyStats[]){
   const cur_time=Date.now()
   const rows=stats.map(stats=>render_row(stats,cur_time)).join('\n')
   if (rows.length==0)
