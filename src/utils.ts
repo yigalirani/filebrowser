@@ -1,4 +1,5 @@
 import path from 'node:path'
+import {RenderData,LegType} from './types'
 
 const {posix}=path
 export function timeSince(ms:number) {
@@ -57,27 +58,13 @@ export function get_error(ex:any):string{
 function get_legs(path:string){
   return ['',...path.split('/').filter(Boolean)]
 }
-export enum LegType {
-  Regular,
-  Home,
-  Gray,
-}
+
 /*interface PathLeg{
   leg:string
   leg_type:LegType
 }*/
 
-export interface RenderData{
-  fields:any
-  parent_absolute:string
-  parent_relative:string,
-  root_dir:string
-  is_dark:boolean
-  legs?:{leg:string,leg_type:LegType}[]
-  language?:string,
-  is_git?:boolean,
-  cur_handler:string
-}
+
 
 //const langs=hljs.listLanguages()
 //console.log('langs',JSON.stringify(langs,null,2))

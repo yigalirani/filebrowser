@@ -2,7 +2,8 @@
 import express, { Request, Response} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,RenderData} from './utils';
+import {get_error,parse_path_root} from './utils';
+import {RenderData,MyStats} from './types'
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
 import hljs from 'highlight.js'
@@ -13,12 +14,12 @@ import {simpleGit} from 'simple-git';
 
 
 import {
-  MyStats, 
   render_error_page, 
   render_image, 
   render_page, 
   render_table,
 } from './view';
+
 import { marked } from 'marked'
 
 import path from 'node:path';
@@ -86,7 +87,7 @@ async function get_git_info(parent_absolute:string){
   }
 }
 
-function render_data_redirect_if_needed(req:Request, res:Response){
+async function render_data_redirect_if_needed(req:Request, res:Response){
   const url=req.params[0]||'/'
   const root_dir=req.app.locals.root_dir;
   const decoded_url=decodeURI(url)
@@ -99,31 +100,34 @@ function render_data_redirect_if_needed(req:Request, res:Response){
       url,
       decoded_url
     }
+  const stats=await mystats({parent_absolute,base:'',root_dir})
   const ans:RenderData={
     parent_relative,
     parent_absolute,
     root_dir,
     fields,
     is_dark:true,
-    cur_handler:'files'
+    cur_handler:'files',
+    ...stats
   }
   ans.legs=parse_path_root(ans) //calculated here because on this file (the 'controler') is alowed to redirect
   if (ans.legs==undefined){
     res.redirect('/')
   }
+
+  if (stats.is_dir)
+    ans.is_git=await isGitRepo(parent_absolute)
   return ans
 }
 
 async  function handler_get_files(req:Request, res:Response){
-  const render_data=render_data_redirect_if_needed(req,res)
-  const {parent_absolute,root_dir}=render_data
-try{
-    const {is_dir,error,format}=await mystats({parent_absolute,base:'',root_dir})
+  const render_data=await render_data_redirect_if_needed(req,res)
+  const {parent_absolute,root_dir,is_dir,error,format}=render_data
+  try{
     if (error){
       res.end(render_error_page(error,render_data))
     }
     if (is_dir){
-      render_data.is_git=await isGitRepo(parent_absolute)
  
       const stats=await get_files({parent_absolute,root_dir})
       const content=render_table(stats)

@@ -1,4 +1,5 @@
-import {LegType,formatBytes,timeSince,encode_path,RenderData} from './utils'
+import {formatBytes,timeSince,encode_path} from './utils'
+import {LegType,MyStats,RenderData} from './types'
 import {encode} from 'html-entities'
 
 import style from './style.css'
@@ -7,39 +8,6 @@ import styleh from 'highlight.js/styles/github.css';
 //import styleh_dark from 'highlight.js/styles/github-dark.css';
 
 
-export type MyStats={
-  is_dir: boolean;
-  error: null;
-  dev: number;
-  ino: number;
-  mode: number;
-  nlink: number;
-  uid: number;
-  gid: number;
-  rdev: number;
-  size: number;
-  blksize: number;
-  blocks: number;
-  atimeMs: number;
-  mtimeMs: number;
-  ctimeMs: number;
-  birthtimeMs: number;
-  atime: Date;
-  mtime: Date;
-  ctime: Date;
-  birthtime: Date;
-  base: string;
-  absolute: string;
-  relative: string;
-  format?:string;
-} | {
-  base: string;
-  absolute: string;
-  relative: string;
-  error: string;
-  is_dir: undefined;
-  format?:string;
-}
 
 const HOME_ICON=` <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M8 1L1 7H3V15H6V10H10V15H13V7H15L8 1Z"  stroke-width="1" fill="none"/>
