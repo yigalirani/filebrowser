@@ -29,6 +29,10 @@ body{
   padding: 10px;
   width: fit-content;
 }
+.true{
+  display: contents;
+  color:green;
+}
 .inactive_leg{
   display: inline;
   color:gray;

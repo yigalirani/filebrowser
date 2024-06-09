@@ -138,6 +138,11 @@ export function id(a:any){
     return ''
   return a+''
 }
+export function bool(a:boolean){
+  if (a==true)
+    return '<div class=true>true</div>'
+  return 'false'
+}
 type COLS=Record<string,ColDef>
 export function render_table2<T extends s2any>(data:readonly T[],col_defs:COLS){
   function render_row(row:T){

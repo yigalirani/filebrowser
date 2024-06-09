@@ -2,7 +2,7 @@
 import express, { Request, Response} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,date_to_timesince,render_table2,id} from './utils';
+import {get_error,parse_path_root,date_to_timesince,render_table2,id,bool} from './utils';
 import {RenderData,MyStats} from './types'
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
@@ -134,7 +134,7 @@ async  function handler_branches(req:Request, res:Response){
   
   const branches = Object.values((await git.branch()).branches)
   
-  const content=render_table2(branches,{name:id,commit:hash,label:id,current:id,linkedWorkTree:id})
+  const content=render_table2(branches,{name:id,commit:hash,label:id,current:bool,linkedWorkTree:id})
 
   res.end(render_page(content,render_data))
 }

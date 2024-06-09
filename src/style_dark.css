@@ -15,6 +15,10 @@ body{
   color:white;
   font-size:15px;
 }
+.true{
+  display: contents;
+  color:lightgreen;
+}
 a{
   color:white;
 }
