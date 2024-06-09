@@ -137,8 +137,10 @@ async  function handler_commitdiff(req:Request, res:Response){
   const {parent_absolute}=render_data
   const git = simpleGit(parent_absolute);
   const commit=req.params['commit']!
-  const diffSummary = await git.diffSummary([`${commit}^`, commit]);
-  const content=JSON.stringify(diffSummary,null,2)
+  const {files} = await git.diffSummary([`${commit}^`, commit])
+  const content=render_table2(files,{file:id,changes:id,insertions:id,deletions:id,binary:bool})
+
+//  const content=JSON.stringify(diffSummary,null,2)
 
   res.end(render_page(`<pre>${content}</pre>`,render_data))
 
