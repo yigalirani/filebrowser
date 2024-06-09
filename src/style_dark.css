@@ -50,6 +50,10 @@ svg{
   display: inline;
   margin-left: 40px;
 }
+.highlited{
+  color:rgb(13, 255, 0);
+  font-weight: bold;
+}
 
 /* VS Code Dark Theme for Highlight.js */
 

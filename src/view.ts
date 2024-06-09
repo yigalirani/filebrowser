@@ -69,7 +69,7 @@ function render_row(stats:MyStats,cur_time:number){
     return `<td>
       <div class=filename>
         <div class=icon>${icon}</div>
-        <a href=${encode_path(relative)}> ${encode(base)}
+        <a href=/files${encode_path(relative)}> ${encode(base)}
       </div>
     </td>`
   }()
@@ -125,7 +125,7 @@ export function logit(_x:any){
 function render_breadcrumbs(render_data:RenderData){
   const {legs,language}=render_data
   const ans=[]
-  let href='/'
+  let href='/files/'
   for (const {leg,leg_type} of legs!){ //is there a better way than using that asterics to assert non-null?
     if (leg_type==LegType.Regular)
       href+=leg+'/'    
@@ -143,6 +143,19 @@ function render_breadcrumbs(render_data:RenderData){
     ans.push(`<div class=comment>(${language})</div>`)
   return ans.join('')
 }
+function render_git_swithcer(render_data:RenderData){
+  const{is_git,parent_relative,cur_handler}=render_data
+  if (!is_git)
+    return ''
+  function make_link(handler:string){
+    const class_decor=(cur_handler==handler)?'class=highlited':''
+    return `<a ${class_decor} href='/${handler}/${parent_relative}'>${handler}</a>`
+  }
+  const links=['files','branches','commits'].map(make_link).join('\n')
+  return `<div class='info'>
+  ${links}
+  </div>`
+}
 export function render_page(center:string,render_data:RenderData){
   const {fields,is_dark}=render_data
   const effective_style=is_dark?style_dark:style+styleh
@@ -156,6 +169,7 @@ CItjn0szWGBJTVoGSCjWs8TleQCQYV95evdxkFT8Kpe0PLDi5WfKd4LUsN5zS1sKFolt8bwAZrCa
 GqNYJAgFDEpQAAAzmxafI4vZWwAAAABJRU5ErkJggg==" />
   <style>${effective_style}</style>
   ${render_breadcrumbs(render_data)} 
+  ${render_git_swithcer(render_data)}
   ${logit({fields})}
   ${center}
 </html>`

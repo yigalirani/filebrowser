@@ -70,10 +70,13 @@ export enum LegType {
 export interface RenderData{
   fields:any
   parent_absolute:string
+  parent_relative:string,
   root_dir:string
   is_dark:boolean
   legs?:{leg:string,leg_type:LegType}[]
-  language?:string
+  language?:string,
+  is_git?:boolean,
+  cur_handler:string
 }
 
 //const langs=hljs.listLanguages()

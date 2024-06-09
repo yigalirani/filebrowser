@@ -58,6 +58,7 @@ module.exports = {
         parser: '@typescript-eslint/parser',
         plugins: ['@typescript-eslint'],
         extends: [
+          "plugin:promise/recommended",
           "plugin:import/typescript",
           "plugin:import/recommended",
           'eslint:recommended', 

@@ -9,7 +9,7 @@ import hljs from 'highlight.js'
 import {read_config} from './config'
 import http from 'http'
 import https from 'https'
-import simpleGit from 'simple-git';
+import {simpleGit} from 'simple-git';
 
 
 import {
@@ -17,7 +17,7 @@ import {
   render_error_page, 
   render_image, 
   render_page, 
-  render_table
+  render_table,
 } from './view';
 import { marked } from 'marked'
 
@@ -52,6 +52,17 @@ async function get_files({parent_absolute,root_dir}:{
   const files=await fs.readdir(parent_absolute)
   return await Promise.all(files.map(base=>mystats({parent_absolute,base,root_dir}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
+async function isGitRepo(directoryPath:string) {
+  const git = simpleGit(directoryPath);
+  try {
+      // Check if the directory is a Git repository by running 'git status'
+      await git.status();
+      return true;
+  } catch (error) {
+      // If an error occurs, it's likely not a Git repository
+      return false;
+  }
+}
 
 async function get_git_info(parent_absolute:string){
   try{
@@ -64,8 +75,8 @@ async function get_git_info(parent_absolute:string){
     }).join('\n')
     return `<table>
     <tr>
-      <th>hash</th>
       <th>date</th>
+      <th>hash</th>
       <th>message</th>
     <tr>
       ${rows}
@@ -74,8 +85,8 @@ async function get_git_info(parent_absolute:string){
     return ex+''
   }
 }
-async  function get(req:Request, res:Response){
-  const {url}=req
+async  function handler_get_files(req:Request, res:Response){
+  const url=req.params[0]||'/'
   const root_dir=req.app.locals.root_dir;
   const decoded_url=decodeURI(url)
   const parent_absolute=posix.join(root_dir,decoded_url)
@@ -88,10 +99,12 @@ async  function get(req:Request, res:Response){
       decoded_url
     }
   const render_data:RenderData={
+    parent_relative,
     parent_absolute,
     root_dir,
     fields,
-    is_dark:true
+    is_dark:true,
+    cur_handler:'files'
   }
   render_data.legs=parse_path_root(render_data) //calculated here because on this file (the 'controler') is alowed to redirect
   if (render_data.legs==undefined){
@@ -105,11 +118,12 @@ try{
       res.end(render_error_page(error,render_data))
     }
     if (is_dir){
+      render_data.is_git=await isGitRepo(parent_absolute)
+ 
       const stats=await get_files({parent_absolute,root_dir})
-      const content_git=await get_git_info(parent_absolute)
       const content=render_table(stats)
 
-      res.end(render_page(content_git+content,render_data))
+      res.end(render_page(content,render_data))
       return
     }
 
@@ -159,9 +173,10 @@ async function run_app() {
     app.use(express.static('static'))
     app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
     app.use(express.urlencoded({ extended: false }));
-    app.use(password_protect(config.password))    
+    //app.use(password_protect(config.password))    
     app.use('/static',express.static('/'))
-    app.get('*',get)   
+    app.get('/files*',handler_get_files)
+    app.get('/*',handler_get_files)
     const server= await async function(){
       if (protocol=='https')
         return await https.createServer({cert,key}, app)
