@@ -2,7 +2,7 @@
 import express, { Request, Response} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,date_to_timesince} from './utils';
+import {get_error,parse_path_root,date_to_timesince,render_table2} from './utils';
 import {RenderData,MyStats} from './types'
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
@@ -63,41 +63,6 @@ async function isGitRepo(directoryPath:string) {
       // If an error occurs, it's likely not a Git repository
       return false;
   }
-}
-type RenderFunc=(a:any)=>string
-type ColDef=RenderFunc|{
-  f:RenderFunc,
-  title:string
-}
-
-function call_def(coldef: ColDef, a: any) {
-  if (typeof coldef === 'function'){
-    return coldef(a)
-  }
-  return coldef.f(a)
-}
-function get_title(name:string,coldef: ColDef){
-  if (typeof coldef === 'function'){
-    return name
-  }  
-  return coldef.title
-}
-type s2any=Record<string,any>
-type COLS=Record<string,ColDef>
-function render_table2<T extends s2any>(data:readonly T[],col_defs:COLS){
-  function render_row(row:T){
-    const cols=Object.entries(col_defs).map(([name,col_def])=>`<td>${call_def(col_def,row[name])}</td>`)
-    const ans=`<tr>${cols.join('\n')}</tr>`
-    return ans
-  }
-  const body=data.map(render_row).join('\n')
-  const head=Object.entries(col_defs).map(([name,col_def])=>`<th>${get_title(name,col_def)}</th>`).join('\n')
-  const ans=`<table>
-  <tr>${head}</tr>
-  ${body}
-  </table>`
-  
-  return ans
 }
 function id(a:any){
   return a+''
