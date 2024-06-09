@@ -101,43 +101,48 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
   }    
   return ans
 }
+function hash(x:string){
+  const trimmed=x.slice(0,8)
+  return `<pre>${trimmed}</pre>`
+}  
+const date={
+  f:date_to_timesince,
+  title:'time ago'
+}
 async  function handler_commits(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'commits')  
-  const {parent_absolute}=render_data
-
-  const date={
-    f:date_to_timesince,
-    title:'time ago'
-  }
-  function hash(x:string){
-    const trimmed=x.slice(0,8)
-    return `<pre>${trimmed}</pre>`
-  }  
-
+  const {parent_absolute}=render_data 
   const git = simpleGit(parent_absolute);
   const log = await git.log();
   const commits = log.all; 
   const content=render_table2(commits,{date,hash,message:id})
-
   res.end(render_page(content,render_data))
 }
+
 async  function handler_branches(req:Request, res:Response){
-  const render_data=await render_data_redirect_if_needed(req,res,'commits')  
+  const render_data=await render_data_redirect_if_needed(req,res,'branches')  
   const {parent_absolute}=render_data
 
-  function hash(x:string){
-    const trimmed=x.slice(0,8)
-    return `<pre>${trimmed}</pre>`
-  }  
 
   const git = simpleGit(parent_absolute);
-  
   const branches = Object.values((await git.branch()).branches)
-  
   const content=render_table2(branches,{name:id,commit:hash,label:id,current:bool,linkedWorkTree:id})
 
   res.end(render_page(content,render_data))
 }
+async  function handler_commitdiff(req:Request, res:Response){
+  const render_data=await render_data_redirect_if_needed(req,res,'branches')  
+  const {parent_absolute}=render_data
+  const git = simpleGit(parent_absolute);
+  const commit=req.params['commit']!
+  const diffSummary = await git.diffSummary([`${commit}^`, commit]);
+  const content=JSON.stringify(diffSummary,null,2)
+
+  res.end(render_page(`<pre>${content}</pre>`,render_data))
+
+
+}
+
 
 async  function handler_files(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'files')
@@ -204,6 +209,7 @@ async function run_app() {
     app.get('/files*',handler_files)
     app.get('/commits*',handler_commits)
     app.get('/branches*',handler_branches)
+    app.get('/commitdiff/:commit/*',handler_commitdiff)
     app.get('/*',handler_files)
     const server= await async function(){
       if (protocol=='https')

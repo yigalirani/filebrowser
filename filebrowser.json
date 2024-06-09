@@ -4,5 +4,5 @@
   "key"  : "privkey.pem",
   "cert" : "cert.pem",
   "password"  : "hello",
-  "root_dir"  : "/yigal"
+  "root_dir"  : "/"
 }
