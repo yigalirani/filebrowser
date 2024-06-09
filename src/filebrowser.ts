@@ -96,14 +96,15 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
 
   if (stats.is_dir)
     ans.is_git=await isGitRepo(parent_absolute)
+  if (ans.is_git==undefined && cur_handler!='files'){
+    res.redirect(`/files/${parent_relative}`)
+  }    
   return ans
 }
 async  function handler_commits(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'commits')  
-  const {is_git,parent_relative,parent_absolute}=render_data
-  if (is_git==undefined){
-    res.redirect(`/files/${parent_relative}`)
-  }  
+  const {parent_absolute}=render_data
+
   const date={
     f:date_to_timesince,
     title:'time ago'
@@ -120,6 +121,24 @@ async  function handler_commits(req:Request, res:Response){
 
   res.end(render_page(content,render_data))
 }
+async  function handler_branches(req:Request, res:Response){
+  const render_data=await render_data_redirect_if_needed(req,res,'commits')  
+  const {parent_absolute}=render_data
+
+  function hash(x:string){
+    const trimmed=x.slice(0,8)
+    return `<pre>${trimmed}</pre>`
+  }  
+
+  const git = simpleGit(parent_absolute);
+  
+  const branches = Object.values((await git.branch()).branches)
+  
+  const content=render_table2(branches,{name:id,commit:hash,label:id,current:id,linkedWorkTree:id})
+
+  res.end(render_page(content,render_data))
+}
+
 async  function handler_files(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'files')
   const {parent_absolute,root_dir,is_dir,error,format}=render_data
@@ -184,6 +203,7 @@ async function run_app() {
     app.use('/static',express.static('/'))
     app.get('/files*',handler_files)
     app.get('/commits*',handler_commits)
+    app.get('/branches*',handler_branches)
     app.get('/*',handler_files)
     const server= await async function(){
       if (protocol=='https')
