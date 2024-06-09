@@ -1,9 +1,13 @@
 table td{
   background-color: #22415e;
+  padding: 5px;
 }
 table th{
   background-color: #690303;
   font-weight: normal;
+  white-space: nowrap;
+  padding: 5px;
+  text-align: left;
 }
 body{
   font-family: Arial, Helvetica, sans-serif;

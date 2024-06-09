@@ -2,6 +2,7 @@ import path from 'node:path'
 import {RenderData,LegType} from './types'
 
 const {posix}=path
+
 export function timeSince(ms:number) {
   var seconds = Math.floor(ms / 1000);
   var interval = seconds / 31536000;
@@ -27,6 +28,15 @@ export function timeSince(ms:number) {
     return render_ago('minute')
   interval = seconds
   return render_ago('second')
+}
+export function date_to_timesince(dateString: string) {
+  // Parse the date string to a Date object
+  const ago_time = new Date(dateString).getTime();
+  const cur_time = new Date().getTime()
+  const diff=cur_time-ago_time
+  // Get the Unix timestamp in milliseconds and convert it to seconds
+
+  return timeSince(diff);
 }
 export function formatBytes(bytes: number, decimals = 2): string {
   if (bytes === 0) return '0 Bytes';
