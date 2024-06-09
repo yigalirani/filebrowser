@@ -1,5 +1,5 @@
 
-import express, { Request, Response } from 'express';
+import express, { Request, Response} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
 import {get_error,parse_path_root,RenderData} from './utils';
@@ -85,7 +85,8 @@ async function get_git_info(parent_absolute:string){
     return ex+''
   }
 }
-async  function handler_get_files(req:Request, res:Response){
+
+function render_data_redirect_if_needed(req:Request, res:Response){
   const url=req.params[0]||'/'
   const root_dir=req.app.locals.root_dir;
   const decoded_url=decodeURI(url)
@@ -98,7 +99,7 @@ async  function handler_get_files(req:Request, res:Response){
       url,
       decoded_url
     }
-  const render_data:RenderData={
+  const ans:RenderData={
     parent_relative,
     parent_absolute,
     root_dir,
@@ -106,12 +107,16 @@ async  function handler_get_files(req:Request, res:Response){
     is_dark:true,
     cur_handler:'files'
   }
-  render_data.legs=parse_path_root(render_data) //calculated here because on this file (the 'controler') is alowed to redirect
-  if (render_data.legs==undefined){
+  ans.legs=parse_path_root(ans) //calculated here because on this file (the 'controler') is alowed to redirect
+  if (ans.legs==undefined){
     res.redirect('/')
-    return
   }
+  return ans
+}
 
+async  function handler_get_files(req:Request, res:Response){
+  const render_data=render_data_redirect_if_needed(req,res)
+  const {parent_absolute,root_dir}=render_data
 try{
     const {is_dir,error,format}=await mystats({parent_absolute,base:'',root_dir})
     if (error){
@@ -139,8 +144,6 @@ try{
       res.end(render_page(content,render_data))
       return
     }
-
-     
 
     //const format= guessFileFormat(base)
     if (format==null){
