@@ -17,6 +17,11 @@ body{
   color:white;
   font-size:15px;
 }
+.linkedhash{
+  white-space: pre;        /* Preserves whitespace and line breaks */
+  font-family: monospace;  /* Uses a monospace font */
+  overflow: auto;    
+}
 .true{
   display: contents;
   color:lightgreen;

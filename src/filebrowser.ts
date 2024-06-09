@@ -101,32 +101,34 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
   }    
   return ans
 }
-function hash(x:string){
-  const trimmed=x.slice(0,8)
-  return `<pre>${trimmed}</pre>`
-}  
+function linked_hash(parent_relative:string){
+  return function (x:string){
+    const trimmed=x.slice(0,8)
+    return `<a class=linkedhash href=/commitdiff/${trimmed}/${parent_relative}>${trimmed}</a>`
+  }  
+}
 const date={
   f:date_to_timesince,
   title:'time ago'
 }
 async  function handler_commits(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'commits')  
-  const {parent_absolute}=render_data 
+  const {parent_absolute,parent_relative}=render_data 
   const git = simpleGit(parent_absolute);
   const log = await git.log();
   const commits = log.all; 
-  const content=render_table2(commits,{date,hash,message:id})
+  const content=render_table2(commits,{date,hash:linked_hash(parent_relative),message:id})
   res.end(render_page(content,render_data))
 }
 
 async  function handler_branches(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'branches')  
-  const {parent_absolute}=render_data
+  const {parent_absolute,parent_relative}=render_data
 
 
   const git = simpleGit(parent_absolute);
   const branches = Object.values((await git.branch()).branches)
-  const content=render_table2(branches,{name:id,commit:hash,label:id,current:bool,linkedWorkTree:id})
+  const content=render_table2(branches,{name:id,commit:linked_hash(parent_relative),label:id,current:bool,linkedWorkTree:id})
 
   res.end(render_page(content,render_data))
 }
