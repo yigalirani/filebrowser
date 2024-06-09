@@ -3,7 +3,9 @@ import {RenderData,LegType} from './types'
 
 const {posix}=path
 
-export function timeSince(ms:number) {
+export function timeSince(ago_time:number) {
+  const cur_time = new Date().getTime()
+  const ms=cur_time-ago_time  
   var seconds = Math.floor(ms / 1000);
   var interval = seconds / 31536000;
   function render_ago(unit:string){
@@ -32,11 +34,10 @@ export function timeSince(ms:number) {
 export function date_to_timesince(dateString: string) {
   // Parse the date string to a Date object
   const ago_time = new Date(dateString).getTime();
-  const cur_time = new Date().getTime()
-  const diff=cur_time-ago_time
+
   // Get the Unix timestamp in milliseconds and convert it to seconds
 
-  return timeSince(diff);
+  return timeSince(ago_time);
 }
 export function formatBytes(bytes: number, decimals = 2): string {
   if (bytes === 0) return '0 Bytes';
@@ -104,31 +105,48 @@ export function parse_path_root(render_data:RenderData){
 }
 
 type RenderFunc=(a:any)=>string
+export type s2any=Record<string,any>
+type RowRenderFunc=(row:s2any,name:string)=>string
 type ColDef=RenderFunc|{
-  f:RenderFunc,
-  title:string
+  f?:RenderFunc,
+  row_f?:RowRenderFunc,
+  title?:string
 }
 
-function call_def(coldef: ColDef, a: any) {
+function call_def(coldef: ColDef, row:s2any,name:string) {
   if (typeof coldef === 'function'){
+    const a=row[name]
     return coldef(a)
   }
-  return coldef.f(a)
+  const {f,row_f}=coldef
+  if (row_f!=null)
+    return row_f(row,name)
+  const a=row[name]
+  if (f!=null){
+    return f(a)
+  }
+  return a
 }
 function get_title(name:string,coldef: ColDef){
   if (typeof coldef === 'function'){
     return name
   }  
-  return coldef.title
+  return coldef.title||name
 }
-type s2any=Record<string,any>
+export function id(a:any){
+  if (a==null)
+    return ''
+  return a+''
+}
 type COLS=Record<string,ColDef>
 export function render_table2<T extends s2any>(data:readonly T[],col_defs:COLS){
   function render_row(row:T){
-    const cols=Object.entries(col_defs).map(([name,col_def])=>`<td>${call_def(col_def,row[name])}</td>`)
+    const cols=Object.entries(col_defs).map(([name,col_def])=>`<td>${call_def(col_def,row,name)}</td>`)
     const ans=`<tr>${cols.join('\n')}</tr>`
     return ans
   }
+  if (data.length==0)
+    return '<div class=info>(empty )</div>'
   const body=data.map(render_row).join('\n')
   const head=Object.entries(col_defs).map(([name,col_def])=>`<th>${get_title(name,col_def)}</th>`).join('\n')
   const ans=`<table>

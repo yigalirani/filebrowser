@@ -1,4 +1,4 @@
-import {formatBytes,timeSince,encode_path} from './utils'
+import {formatBytes,timeSince,encode_path,id,render_table2,s2any} from './utils'
 import {LegType,MyStats,RenderData} from './types'
 import {encode} from 'html-entities'
 
@@ -26,63 +26,48 @@ const FILE_ICON=`<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xml
 <line x1="4" y1="12" x2="10" y2="12"  stroke-width="0.5"/>
 </svg>
 `
-function render_row(stats:MyStats,cur_time:number){
-  const {base,error,relative,is_dir,format}=stats
-  const icon=function(){
-    if (error!=null)
-      return '&#x274C;'
-  return is_dir?'&#128193;': FILE_ICON
-  }()  
-  const file_name=function (){
-    return `<td>
-      <div class=filename>
-        <div class=icon>${icon}</div>
-        <a href=/files${encode_path(relative)}> ${encode(base)}
-      </div>
-    </td>`
-  }()
-  if (error!=null){
-    return `<tr> ${file_name}
-      <td ></td><td><div class=error_txt>${encode(error)}</div></td>
-      <td></td>
-      <td></td>
-    </tr>`
-  }
-  const {size,mtimeMs}=stats
-  const the_time_since=timeSince(cur_time-mtimeMs)
-  if (is_dir){
-    return `<tr>
-      ${file_name}
-      <td></td>
-      <td></td>
-      <td></td>
-      <td>${the_time_since}<td>
-    </tr>`
-  }
+const filename={
+  row_f(stats:s2any){
+    const {base,error,relative,is_dir}=stats as MyStats
+    const icon=function(){
+      if (error!=null)
+        return '&#x274C;'
+    return is_dir?'&#128193;': FILE_ICON
+    }()  
+    return`<div class=filename>
+          <div class=icon>${icon}</div>
+          <a href=/files${encode_path(relative)}> ${encode(base)}
+        </div>`
 
-  return `<tr>
-    ${file_name}
-    <td><a href="/static/${encode_path(relative)}" download>${DOWNLOAD_ICON}</a></td><td>${format||''}</td>
-    <td>${formatBytes(size)}</td>
-    <td>${the_time_since}</td>
-  </tr>`
-} 
-export function  render_table(stats:MyStats[]){
-  const cur_time=Date.now()
-  const rows=stats.map(stats=>render_row(stats,cur_time)).join('\n')
-  if (rows.length==0)
-    return '<div class=info>(empty directory)</div>'
-  return `<table>
-  <tr>
-    <th>filename</th>
-    <th></th>
-    <th>type</th>
-    <th>size</th>
-    <th>changed</th>
-  <tr>
-    ${rows}
-  </table>`
+  }
 }
+
+const download={
+  title:' ',
+  row_f(stats:s2any){
+    const {is_dir,relative,error}=stats as MyStats
+    if (error!=undefined)
+      return `<div class=error_txt>${encode(error)}</div>`
+    if (is_dir)
+      return ''
+    return `<a href="/static/${encode_path(relative)}" download>${DOWNLOAD_ICON}</a>`
+  }
+}
+
+
+export function  render_table(stats:MyStats[]){
+  return render_table2(stats,{
+    filename,
+    download,
+    format:id,
+    size:formatBytes,
+    mtimeMs:{
+      title:'changed',
+      f:timeSince
+    }
+  })
+}
+
 export function logit(_x:any){
   return ''//varlog.css+varlog.dump('logit',x,4)
 }

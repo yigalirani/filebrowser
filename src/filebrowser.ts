@@ -2,7 +2,7 @@
 import express, { Request, Response} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,date_to_timesince,render_table2} from './utils';
+import {get_error,parse_path_root,date_to_timesince,render_table2,id} from './utils';
 import {RenderData,MyStats} from './types'
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
@@ -17,7 +17,7 @@ import {
   render_error_page, 
   render_image, 
   render_page, 
-  render_table,
+  render_table
 } from './view';
 
 import { marked } from 'marked'
@@ -64,9 +64,7 @@ async function isGitRepo(directoryPath:string) {
       return false;
   }
 }
-function id(a:any){
-  return a+''
-}
+
 async function get_git_commits(parent_absolute:string){
   const date={
     f:date_to_timesince,
