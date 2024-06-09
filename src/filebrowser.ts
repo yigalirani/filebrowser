@@ -65,24 +65,6 @@ async function isGitRepo(directoryPath:string) {
   }
 }
 
-async function get_git_commits(parent_absolute:string){
-  const date={
-    f:date_to_timesince,
-    title:'time ago'
-  }
-  function hash(x:string){
-    const trimmed=x.slice(0,8)
-    return `<pre>${trimmed}</pre>`
-  }  
-  try{
-    const git = simpleGit(parent_absolute);
-    const log = await git.log();
-    const commits = log.all; 
-    return render_table2(commits,{date,hash,message:id})
-  }catch(ex){
-    return ex+''
-  }
-}
 
 async function render_data_redirect_if_needed(req:Request, res:Response,cur_handler:string){
   const url=req.params[0]||'/'
@@ -122,7 +104,21 @@ async  function handler_commits(req:Request, res:Response){
   if (is_git==undefined){
     res.redirect(`/files/${parent_relative}`)
   }  
-  res.end(render_page(await get_git_commits(parent_absolute),render_data))
+  const date={
+    f:date_to_timesince,
+    title:'time ago'
+  }
+  function hash(x:string){
+    const trimmed=x.slice(0,8)
+    return `<pre>${trimmed}</pre>`
+  }  
+
+  const git = simpleGit(parent_absolute);
+  const log = await git.log();
+  const commits = log.all; 
+  const content=render_table2(commits,{date,hash,message:id})
+
+  res.end(render_page(content,render_data))
 }
 async  function handler_files(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'files')
