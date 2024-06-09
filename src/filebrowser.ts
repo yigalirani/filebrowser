@@ -65,7 +65,7 @@ async function isGitRepo(directoryPath:string) {
   }
 }
 
-async function get_git_info(parent_absolute:string){
+async function get_git_commits(parent_absolute:string){
   try{
     const git = simpleGit(parent_absolute);
     const log = await git.log();
@@ -87,7 +87,7 @@ async function get_git_info(parent_absolute:string){
   }
 }
 
-async function render_data_redirect_if_needed(req:Request, res:Response){
+async function render_data_redirect_if_needed(req:Request, res:Response,cur_handler:string){
   const url=req.params[0]||'/'
   const root_dir=req.app.locals.root_dir;
   const decoded_url=decodeURI(url)
@@ -107,7 +107,7 @@ async function render_data_redirect_if_needed(req:Request, res:Response){
     root_dir,
     fields,
     is_dark:true,
-    cur_handler:'files',
+    cur_handler,
     ...stats
   }
   ans.legs=parse_path_root(ans) //calculated here because on this file (the 'controler') is alowed to redirect
@@ -119,9 +119,16 @@ async function render_data_redirect_if_needed(req:Request, res:Response){
     ans.is_git=await isGitRepo(parent_absolute)
   return ans
 }
-
-async  function handler_get_files(req:Request, res:Response){
-  const render_data=await render_data_redirect_if_needed(req,res)
+async  function handler_commits(req:Request, res:Response){
+  const render_data=await render_data_redirect_if_needed(req,res,'commits')  
+  const {is_git,parent_relative,parent_absolute}=render_data
+  if (is_git==undefined){
+    res.redirect(`/files/${parent_relative}`)
+  }  
+  res.end(render_page(await get_git_commits(parent_absolute),render_data))
+}
+async  function handler_files(req:Request, res:Response){
+  const render_data=await render_data_redirect_if_needed(req,res,'files')
   const {parent_absolute,root_dir,is_dir,error,format}=render_data
   try{
     if (error){
@@ -182,8 +189,9 @@ async function run_app() {
     app.use(express.urlencoded({ extended: false }));
     //app.use(password_protect(config.password))    
     app.use('/static',express.static('/'))
-    app.get('/files*',handler_get_files)
-    app.get('/*',handler_get_files)
+    app.get('/files*',handler_files)
+    app.get('/commits*',handler_commits)
+    app.get('/*',handler_files)
     const server= await async function(){
       if (protocol=='https')
         return await https.createServer({cert,key}, app)
