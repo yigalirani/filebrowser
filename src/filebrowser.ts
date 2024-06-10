@@ -18,6 +18,7 @@ import {
   render_image, 
   render_page, 
   render_table,
+  render_simple_error_page
 } from './view';
 
 import { marked } from 'marked'
@@ -196,16 +197,16 @@ async  function handler_files(req:Request, res:Response){
 type ExpressHandler=(req: Request, res: Response, next?: NextFunction)=>Promise<void> 
 export function catcher(fn:ExpressHandler){
   const ans:ExpressHandler= async function (req, res, next) {
-    // eslint-disable-next-line promise/no-callback-in-promise
-    fn(req, res).catch(next);
+    try {
+      await fn(req, res, next)
+    } catch (error) {
+        res.end(render_simple_error_page('ouch, an internal rerror',error))
+        //res.status(500).send(); // Handle error in case next is not provided
+    }
   };
   return ans
 }
 
-function capture_error(err: any, req: Request, res: Response){
-  //console.error(err.stack);
-  res.end('Something broke!');
-}
 async function run_app() {
   try{
     const config=await read_config('./filebrowser.json')
@@ -224,7 +225,6 @@ async function run_app() {
     app.get('/branches*',handler_branches)
     app.get('/commitdiff/:commit/*',catcher(handler_commitdiff))
     app.get('/*',handler_files)
-    // /app.use(capture_error)
     const server= await async function(){
       if (protocol=='https')
         return await https.createServer({cert,key}, app)

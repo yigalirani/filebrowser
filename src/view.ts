@@ -145,3 +145,15 @@ export function render_txt(txt:string,render_data:RenderData){
   const encoded_txt=encode(txt)
   return render_page(`<pre>${encoded_txt}</pre>`,render_data)
 }
+export function render_simple_error_page(message:string,error:Error){
+  const is_dark=true //todo: use the value in the config
+  const effective_style=is_dark?style_dark:style+styleh  
+  const stack=error.stack?.split('\n').map(x=>'<li>'+x).join('\n')||''
+  return `<html>
+    <style>${effective_style}</style>
+   <h1>${message}</h1>
+    <h3>${error.message}</h3>
+    <ul>${stack}</ul>
+  </html>`  
+  return 
+}
