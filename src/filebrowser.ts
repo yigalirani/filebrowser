@@ -40,9 +40,9 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
     const stats = await fs.stat(absolute);
     const is_dir=stats.isDirectory()
     
-    return {base:base2,format,absolute,relative,...stats,is_dir,error:null}
+    return {base:base2,format,absolute,relative,stats,is_dir}
   }catch(ex){
-    return {base,format,absolute,relative,error:get_error(ex),is_dir:undefined}
+    return {base,format,absolute,relative,error:get_error(ex)}
   } 
 }
 //export type MyStats = Awaited<ReturnType<typeof mystats>>
@@ -87,7 +87,8 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
     fields,
     is_dark:true,
     cur_handler,
-    ...stats
+    stats,
+    //error:stats.error
   }
   ans.legs=parse_path_root(ans) //calculated here because on this file (the 'controler') is alowed to redirect
   if (ans.legs==undefined){
@@ -150,7 +151,7 @@ async  function handler_commitdiff(req:Request, res:Response){
 
 async  function handler_files(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'files')
-  const {parent_absolute,root_dir,is_dir,error,format}=render_data
+  const {parent_absolute,root_dir,stats:{is_dir,error,format}}=render_data
   try{
     if (error){
       res.end(render_error_page(error,render_data))
