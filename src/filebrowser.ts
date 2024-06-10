@@ -220,9 +220,9 @@ async function run_app() {
     app.use(express.urlencoded({ extended: false }));
     //app.use(password_protect(config.password))    
     app.use('/static',express.static('/'))
-    app.get('/files*',handler_files)
-    app.get('/commits*',handler_commits)
-    app.get('/branches*',handler_branches)
+    app.get('/files*',catcher(handler_files))
+    app.get('/commits*',catcher(handler_commits))
+    app.get('/branches*',catcher(handler_branches))
     app.get('/commitdiff/:commit/*',catcher(handler_commitdiff))
     app.get('/*',handler_files)
     const server= await async function(){
