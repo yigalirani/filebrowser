@@ -71,9 +71,6 @@ export function  render_table(stats:MyStats[]){
 export function logit(_x:any){
   return ''//varlog.css+varlog.dump('logit',x,4)
 }
-/*function render_leg(absolute:string,base:string,extra_icon=''){
-  return `<a href=${encode_path(absolute)}>${extra_icon}${encode(base)}</a> / `
-}*/
 
 function render_breadcrumbs(render_data:RenderData){
   const {legs,language}=render_data
@@ -104,7 +101,7 @@ function render_git_swithcer(render_data:RenderData){
     const class_decor=(cur_handler==handler)?'class=highlited':''
     return `<a ${class_decor} href='/${handler}/${parent_relative}'>${handler}</a>`
   }
-  const links=['files','branches','commits'].map(make_link).join('\n')
+  const links=['files','branches','commits','commitdiff'].map(make_link).join('\n')
   return `<div class='info'>
   ${links}
   </div>`

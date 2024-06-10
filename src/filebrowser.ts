@@ -17,7 +17,7 @@ import {
   render_error_page, 
   render_image, 
   render_page, 
-  render_table
+  render_table,
 } from './view';
 
 import { marked } from 'marked'
@@ -133,7 +133,7 @@ async  function handler_branches(req:Request, res:Response){
   res.end(render_page(content,render_data))
 }
 async  function handler_commitdiff(req:Request, res:Response){
-  const render_data=await render_data_redirect_if_needed(req,res,'branches')  
+  const render_data=await render_data_redirect_if_needed(req,res,'commitdiff')  
   const {parent_absolute}=render_data
   const git = simpleGit(parent_absolute);
   const commit=req.params['commit']!
