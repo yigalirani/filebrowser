@@ -60,10 +60,21 @@ export function  render_table(stats:MyStats[]){
     filename,
     download,
     format:id,
-    size:formatBytes,
-    mtimeMs:{
-      title:'changed',
-      f:timeSince
+    size:{
+      row_f(a:s2any){
+        const {is_dir,error,stats}=a as MyStats
+        if (error||is_dir||stats==null)
+          return ''
+        return formatBytes(stats.size)
+      }
+    },
+    changed:{
+      row_f(a:s2any){
+        const {is_dir,error,stats}=a as MyStats
+        if (error||is_dir||stats==null)
+          return ''
+        return timeSince(stats.mtimeMs)
+      }
     }
   })
 }
