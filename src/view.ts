@@ -54,6 +54,12 @@ const download={
   }
 }
 
+function get_stats(a:s2any){
+  const {is_dir,error,stats}=a as MyStats
+  if (error||is_dir||stats==null)
+    return null
+  return stats
+}  
 
 export function  render_table(stats:MyStats[]){
   return render_table2(stats,{
@@ -62,10 +68,7 @@ export function  render_table(stats:MyStats[]){
     format:id,
     size:{
       row_f(a:s2any){
-        const {is_dir,error,stats}=a as MyStats
-        if (error||is_dir||stats==null)
-          return ''
-        return formatBytes(stats.size)
+        return formatBytes(get_stats(a)?.size)
       }
     },
     changed:{

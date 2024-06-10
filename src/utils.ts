@@ -3,7 +3,9 @@ import {RenderData,LegType} from './types'
 
 const {posix}=path
 
-export function timeSince(ago_time:number) {
+export function timeSince(ago_time:number|undefined) {
+  if (ago_time==null)
+    return ''
   const cur_time = new Date().getTime()
   const ms=cur_time-ago_time  
   var seconds = Math.floor(ms / 1000);
@@ -39,7 +41,9 @@ export function date_to_timesince(dateString: string) {
 
   return timeSince(ago_time);
 }
-export function formatBytes(bytes: number, decimals = 2): string {
+export function formatBytes(bytes: number|undefined, decimals = 2): string {
+  if (bytes==undefined)
+    return ''
   if (bytes === 0) return '0 Bytes';
 
   const k = 1024;
