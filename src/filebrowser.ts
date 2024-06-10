@@ -1,5 +1,5 @@
 
-import express, { Request, Response} from 'express';
+import express, { Request, Response,NextFunction} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
 import {get_error,parse_path_root,date_to_timesince,render_table2,id,bool} from './utils';
@@ -193,7 +193,19 @@ async  function handler_files(req:Request, res:Response){
     res.end(render_error_page(error,render_data))
   }
 }
+type ExpressHandler=(req: Request, res: Response, next?: NextFunction)=>Promise<void> 
+export function catcher(fn:ExpressHandler){
+  const ans:ExpressHandler= async function (req, res, next) {
+    // eslint-disable-next-line promise/no-callback-in-promise
+    fn(req, res).catch(next);
+  };
+  return ans
+}
 
+function capture_error(err: any, req: Request, res: Response){
+  //console.error(err.stack);
+  res.end('Something broke!');
+}
 async function run_app() {
   try{
     const config=await read_config('./filebrowser.json')
@@ -210,8 +222,9 @@ async function run_app() {
     app.get('/files*',handler_files)
     app.get('/commits*',handler_commits)
     app.get('/branches*',handler_branches)
-    app.get('/commitdiff/:commit/*',handler_commitdiff)
+    app.get('/commitdiff/:commit/*',catcher(handler_commitdiff))
     app.get('/*',handler_files)
+    // /app.use(capture_error)
     const server= await async function(){
       if (protocol=='https')
         return await https.createServer({cert,key}, app)
