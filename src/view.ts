@@ -1,5 +1,6 @@
 import {formatBytes,timeSince,encode_path,id,render_table2,s2any} from './utils'
 import {LegType,MyStats,RenderData} from './types'
+import {Stats} from 'fs'
 import {encode} from 'html-entities'
 
 import style from './style.css'
@@ -54,31 +55,24 @@ const download={
   }
 }
 
-function get_stats(a:s2any){
-  const {is_dir,error,stats}=a as MyStats
-  if (error||is_dir||stats==null)
-    return null
-  return stats
+function make_row_f(field:keyof Stats,f:(a:any)=>string){
+  return {
+    row_f(a:s2any){
+      const {is_dir,error,stats}=a as MyStats
+      if (error||is_dir||stats==null)
+        return ''
+      return f(stats[field])
+    }
+  }
 }  
 
 export function  render_table(stats:MyStats[]){
   return render_table2(stats,{
     filename,
     download,
-    format:id,
-    size:{
-      row_f(a:s2any){
-        return formatBytes(get_stats(a)?.size)
-      }
-    },
-    changed:{
-      row_f(a:s2any){
-        const {is_dir,error,stats}=a as MyStats
-        if (error||is_dir||stats==null)
-          return ''
-        return timeSince(stats.mtimeMs)
-      }
-    }
+    format  : id,
+    size    : make_row_f('size',formatBytes),
+    changed : make_row_f('mtimeMs',timeSince)
   })
 }
 
@@ -139,11 +133,6 @@ GqNYJAgFDEpQAAAzmxafI4vZWwAAAABJRU5ErkJggg==" />
 </html>`
   return content
 }
-export function render_table_page(stats:MyStats[],render_data:RenderData){
-  const center=render_table(stats)
-  return render_page(center,render_data)
-}
-
 export function render_error_page(error:string,render_data:RenderData){
   const center=`<div class=error>${error}</div>`
   return render_page(center,render_data)
