@@ -176,11 +176,11 @@ async  function handler_files(req:Request, res:Response){
     }
 
     //const format= guessFileFormat(base)
+    const txt=await fs.readFile(parent_absolute, 'utf8') 
     if (format==null){
-      res.end(render_page('<div class=info>unrecogrnized format,todo: render anyway</div>',render_data))
+      res.end(render_page(`<div class=info>unrecogrnized format: rendering as text</div><pre>${txt}</pre>`,render_data))
       return
     }
-    const txt=await fs.readFile(parent_absolute, 'utf8') 
     if (format=='markdown'){
       res.end(render_page(await marked.parse(txt),render_data))
       return
@@ -210,15 +210,15 @@ export function catcher(fn:ExpressHandler){
 async function run_app() {
   try{
     const config=await read_config('./filebrowser.json')
-    const {port,protocol,cert_content:cert,key_content:key}=config
+    const {port,protocol,cert_content:cert,key_content:key,secret}=config
     const host='0.0.0.0' //should read this from config file
     const app = express();
     app.locals.root_dir=config.root_dir
  
     app.use(express.static('static'))
-    app.use(session({ secret: 'grant' })) //, cookie: { maxAge: 60000 }}))
+    app.use(session({secret})) //, cookie: { maxAge: 60000 }}))
     app.use(express.urlencoded({ extended: false }));
-    //app.use(password_protect(config.password))    
+    app.use(password_protect(config.password))
     app.use('/static',express.static('/'))
     app.get('/files*',catcher(handler_files))
     app.get('/commits*',catcher(handler_commits))

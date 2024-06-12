@@ -9,6 +9,7 @@ interface Config {
   root_dir      : string;
   key_content?  : string; //wo be filled by app startup
   cert_content? : string;
+  secret        : string
 }
 async function readFileIfExists  (filename='',field:string){
   try{
@@ -29,6 +30,7 @@ export async function read_config(filePath: string) {
   const config:Record<string,any> = JSON.parse(fileContent);
 
   const ans:Config = {
+    secret:'',
     port: 80,
     protocol: 'https',
     root_dir: '/',
@@ -40,6 +42,10 @@ export async function read_config(filePath: string) {
   if (ans.protocol=='https' &&( ans.key_content==undefined|| ans.cert_content==undefined)){
     console.warn('protocol is https, but at least of of the certificate files are not found reverting to http')
     ans.protocol='http'
+    if (!ans.secret||!ans.password){
+      console.warn('secret and password are mandatory,existing')
+      process.exit(1)
+    }
   }
   const print_ans={
     ...ans,

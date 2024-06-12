@@ -1,8 +1,9 @@
 {
-  "port"      : 3000,
-  "protocol"  : "https",
-  "key"  : "privkey.pem",
-  "cert" : "cert.pem",
-  "password"  : "hello",
-  "root_dir"  : "/"
+  "port"     : 3000,
+  "protocol" : "https",
+  "key"      : "privkey.pem",
+  "cert"     : "cert.pem",
+  "password" : "hello",
+  "root_dir" : "/",
+  "secret"   : "grant"
 }
