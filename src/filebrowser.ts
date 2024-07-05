@@ -47,11 +47,26 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
   } 
 }
 //export type MyStats = Awaited<ReturnType<typeof mystats>>
-async function get_files({parent_absolute,root_dir}:{
-  parent_absolute:string,
-  root_dir:string
-}){
-  const files=await fs.readdir(parent_absolute)
+async function get_files(render_data:RenderData){
+  const {parent_absolute,root_dir,req}=render_data
+  const filter=function(){
+    const ans=req.query.filter
+    if (typeof ans==='string'){
+      return ans
+    }
+    return null
+  }()
+  const filter_reg_ex=function(){
+    if (!filter)
+      return /.*/; // Matches everything
+    return RegExp(filter)///elaborate
+  }()
+  function filter_func(base:string){
+    if (filter=='')
+      return true
+    return filter_reg_ex.test(base)
+  }
+  const files=[...await fs.readdir(parent_absolute)].filter(filter_func)
   return await Promise.all(files.map(base=>mystats({parent_absolute,base,root_dir}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
 async function isGitRepo(directoryPath:string) {
@@ -155,8 +170,7 @@ async  function handler_files(req:Request, res:Response){
       res.end(render_error_page(error,render_data))
     }
     if (is_dir){
- 
-      const stats=await get_files({parent_absolute,root_dir})
+      const stats=await get_files(render_data)
       const content=render_table(stats)
 
       res.end(render_page(content,render_data))

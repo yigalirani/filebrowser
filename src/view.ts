@@ -116,15 +116,15 @@ function render_git_swithcer(render_data:RenderData){
 }
 function render_control(render_data:RenderData){
   const {req}=render_data
-  const currentFilter = req.query.filter||''
+  const filter = req.query.filter||''
   return `<form class=control method="get">
-  <input id=filterInput type="text" name="filter" placeholder="filter" value="${currentFilter}"/>
+  <input id=filterInput type="text" name="filter" placeholder="filter" value="${filter}"/>
   <button type="submit">apply</button>
 </form>
     <script>
       (function() {
         const input = document.getElementById('filterInput');
-        const originalValue = '${currentFilter}';
+        const originalValue = '${filter}';
         
         input.addEventListener('input', function() {
           this.classList.toggle('changed', this.value !== originalValue);
