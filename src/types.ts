@@ -1,4 +1,5 @@
 import {Stats} from 'fs'
+import {Request} from 'express';
 export type MyStats={
   is_dir?  : boolean;
   error?   : string;
@@ -14,6 +15,7 @@ export enum LegType {
   Gray,
 }
 export interface RenderData{
+  req             : Request,
   fields          : any
   parent_absolute : string
   parent_relative : string,

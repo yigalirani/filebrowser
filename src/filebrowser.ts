@@ -89,6 +89,7 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
     is_dark:true,
     cur_handler,
     stats,
+    req
     //error:stats.error
   }
   ans.legs=parse_path_root(ans) //calculated here because on this file (the 'controler') is alowed to redirect
@@ -216,7 +217,7 @@ async function run_app() {
     app.locals.root_dir=config.root_dir
  
     app.use(express.static('static'))
-    app.use(session({secret})) //, cookie: { maxAge: 60000 }}))
+    app.use(session({secret,cookie: { maxAge: 6000000 }}))
     app.use(express.urlencoded({ extended: false }));
     app.use(password_protect(config.password))
     app.use('/static',express.static('/'))

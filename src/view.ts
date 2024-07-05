@@ -114,6 +114,26 @@ function render_git_swithcer(render_data:RenderData){
   ${links}
   </div>`
 }
+function render_control(render_data:RenderData){
+  const {req}=render_data
+  const currentFilter = req.query.filter||''
+  return `<form class=control method="get">
+  <input id=filterInput type="text" name="filter" placeholder="filter" value="${currentFilter}"/>
+  <button type="submit">apply</button>
+</form>
+    <script>
+      (function() {
+        const input = document.getElementById('filterInput');
+        const originalValue = '${currentFilter}';
+        
+        input.addEventListener('input', function() {
+          this.classList.toggle('changed', this.value !== originalValue);
+        });
+      })();
+    </script>
+
+`
+}
 export function render_page(center:string,render_data:RenderData){
   const {fields,is_dark}=render_data
   const effective_style=is_dark?style_dark:style+styleh
@@ -128,6 +148,7 @@ GqNYJAgFDEpQAAAzmxafI4vZWwAAAABJRU5ErkJggg==" />
   <style>${effective_style}</style>
   ${render_breadcrumbs(render_data)} 
   ${render_git_swithcer(render_data)}
+  ${render_control(render_data)}
   ${logit({fields})}
   ${center}
 </html>`

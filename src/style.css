@@ -44,3 +44,6 @@ svg{
 .comment{
   display: flex;
 }
+.changed{
+  background:green;
+}

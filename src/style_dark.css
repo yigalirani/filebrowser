@@ -262,3 +262,7 @@ code.hljs {
   /* purposely ignored */
   
 }
+.changed{
+  background-color: #033a16;
+  color:white;
+}
