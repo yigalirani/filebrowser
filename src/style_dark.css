@@ -266,3 +266,8 @@ code.hljs {
   background-color: #033a16;
   color:white;
 }
+.filename b{
+  background-color: #7bff44;
+  color: black;
+
+}
