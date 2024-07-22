@@ -27,7 +27,9 @@ const FILE_ICON=`<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xml
 <line x1="4" y1="12" x2="10" y2="12"  stroke-width="0.5"/>
 </svg>
 `
-const filename={
+const filename=function(render_data:RenderData){
+  const {filter}=render_data
+  return{
   row_f(stats:s2any){
     const {base,error,relative,is_dir}=stats as MyStats
     const icon=function(){
@@ -37,10 +39,11 @@ const filename={
     }()  
     return`<div class=filename>
           <div class=icon>${icon}</div>
-          <a href=/files${encode_path(relative)}> ${encode(base)}
+          <a href=/files${encode_path(relative)}> ${filter.mark(encode(base))}
         </div>`
 
   }
+}
 }
 
 const download={
@@ -66,9 +69,9 @@ function make_row_f(field:keyof Stats,f:(a:any)=>string){
   }
 }  
 
-export function  render_table(stats:MyStats[]){
+export function  render_table(render_data:RenderData,stats:MyStats[]){
   return render_table2(stats,{
-    filename,
+    filename:filename(render_data),
     download,
     format  : id,
     size    : make_row_f('size',formatBytes),
@@ -115,24 +118,8 @@ function render_git_swithcer(render_data:RenderData){
   </div>`
 }
 function render_control(render_data:RenderData){
-  const {req}=render_data
-  const filter = req.query.filter||''
-  return `<form class=control method="get">
-  <input id=filterInput type="text" name="filter" placeholder="filter" value="${filter}"/>
-  <button type="submit">apply</button>
-</form>
-    <script>
-      (function() {
-        const input = document.getElementById('filterInput');
-        const originalValue = '${filter}';
-        
-        input.addEventListener('input', function() {
-          this.classList.toggle('changed', this.value !== originalValue);
-        });
-      })();
-    </script>
-
-`
+  const {filter}=render_data
+  return filter.get_html()
 }
 export function render_page(center:string,render_data:RenderData){
   const {fields,is_dark}=render_data

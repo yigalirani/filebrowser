@@ -143,6 +143,29 @@ export function bool(a:boolean){
     return '<div class=true>true</div>'
   return 'false'
 }
+export function mark({re,text}:{
+  re:RegExp|null
+  text:string
+}){
+  function concat(words:string[]){
+    function f(x:string,i:number){
+        if (i%2==0)
+            return x
+        return `<b>${x}</b>`
+    }
+    return words.map(f)
+  }
+  function split(re:RegExp,value:string){
+    if (!re)
+        return [value]
+    return (value+'').split(re)
+  }  
+  if (re==null||text==null)
+    return text
+  var words=split(re,text)
+  return concat(words)
+}
+
 type COLS=Record<string,ColDef>
 export function render_table2<T extends s2any>(data:readonly T[],col_defs:COLS){
   function render_row(row:T){

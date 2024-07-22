@@ -24,7 +24,10 @@ import {
 import { marked } from 'marked'
 
 import path from 'node:path';
+import {make_filter} from './filter'
 const {posix}=path
+
+
 
 
 async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a directory
@@ -48,25 +51,8 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
 }
 //export type MyStats = Awaited<ReturnType<typeof mystats>>
 async function get_files(render_data:RenderData){
-  const {parent_absolute,root_dir,req}=render_data
-  const filter=function(){
-    const ans=req.query.filter
-    if (typeof ans==='string'){
-      return ans
-    }
-    return null
-  }()
-  const filter_reg_ex=function(){
-    if (!filter)
-      return /.*/; // Matches everything
-    return RegExp(filter)///elaborate
-  }()
-  function filter_func(base:string){
-    if (filter=='')
-      return true
-    return filter_reg_ex.test(base)
-  }
-  const files=[...await fs.readdir(parent_absolute)].filter(filter_func)
+  const {parent_absolute,root_dir,filter}=render_data
+  const files=[...await fs.readdir(parent_absolute)].filter(filter.match)
   return await Promise.all(files.map(base=>mystats({parent_absolute,base,root_dir}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
 async function isGitRepo(directoryPath:string) {
@@ -96,6 +82,7 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
       decoded_url
     }
   const stats=await mystats({parent_absolute,base:'',root_dir})
+  const filter=make_filter(req)
   const ans:RenderData={
     parent_relative,
     parent_absolute,
@@ -104,7 +91,8 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
     is_dark:true,
     cur_handler,
     stats,
-    req
+    req,
+    filter
     //error:stats.error
   }
   ans.legs=parse_path_root(ans) //calculated here because on this file (the 'controler') is alowed to redirect
@@ -164,14 +152,14 @@ async  function handler_commitdiff(req:Request, res:Response){
 
 async  function handler_files(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'files')
-  const {parent_absolute,root_dir,stats:{is_dir,error,format}}=render_data
+  const {parent_absolute,stats:{is_dir,error,format}}=render_data
   try{
     if (error){
       res.end(render_error_page(error,render_data))
     }
     if (is_dir){
       const stats=await get_files(render_data)
-      const content=render_table(stats)
+      const content=render_table(render_data,stats)
 
       res.end(render_page(content,render_data))
       return
@@ -231,7 +219,7 @@ async function run_app() {
     app.locals.root_dir=config.root_dir
  
     app.use(express.static('static'))
-    app.use(session({secret,cookie: { maxAge: 6000000 }}))
+    app.use(session({secret,cookie: { maxAge: 6000000 },resave:true,saveUninitialized:true}))
     app.use(express.urlencoded({ extended: false }));
     app.use(password_protect(config.password))
     app.use('/static',express.static('/'))

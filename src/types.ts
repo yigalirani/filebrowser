@@ -1,5 +1,6 @@
 import {Stats} from 'fs'
 import {Request} from 'express';
+import {Filter} from './filter'
 export type MyStats={
   is_dir?  : boolean;
   error?   : string;
@@ -14,6 +15,7 @@ export enum LegType {
   Home,
   Gray,
 }
+
 export interface RenderData{
   req             : Request,
   fields          : any
@@ -29,4 +31,5 @@ export interface RenderData{
   //error?          : string
   //format?         : string
   stats           : MyStats
+  filter          : Filter,
 }
