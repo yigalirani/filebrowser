@@ -13,45 +13,21 @@ export function make_filter(req:Request):Filter{
     }
     return undefined
   }()  
-  function concat(words:string[]){
-    function f(x:string,i:number){
-      console.log({x,i})
-        if (i%2){
-          console.log('return x')
-            return x
-        }
-        console.log('return filter')
 
-        return `<b>${filter}</b>`
-    }
-    return words.map(f)
-  }
-  function escapeRegExp(x:string) {
-    return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-  function split(re:RegExp,value:string){
-    if (!re)
-        return [value]
-    return (value+'').split(re)
-  }    
-
-  const filter_reg_ex=function(){
+  const re=function(){
     if (!filter)
       return null // Matches everything
-    return RegExp(escapeRegExp(filter),'ig')
+    return new RegExp(`(${filter})`, 'i');
   }()
   const match=function(base:string){
-    if (filter_reg_ex==null)
+    if (re==null)
       return true
-    return filter_reg_ex.test(base)
+    return re.test(base)
   }
+
   function mark(text:string){
-    if (filter_reg_ex==null||text==null)
-      return text
-    var words=split(filter_reg_ex,text)
-    const words2=concat(words)
-    console.log({words2})
-    return words2.join('')
+    if (!re) return text; 
+    return text.replace(re, '<b>$1</b>');
   }
   function get_html(){
     return `<form class=control method="get">
