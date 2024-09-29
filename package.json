@@ -3,48 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
-  "watch": {
-
-    "eslint": {
-      "clearBuffer": true,      
-      "extensions": "ts,js,html,css",
-      "quiet": false,
-      "patterns": [
-        "src"
-      ]
-    },
-    "build": {
-      "clearBuffer": true,      
-      "extensions": "ts,js,html,css",
-      "quiet": false,
-      "patterns": [
-        "src"
-      ]
-    },
-    "tsc": {
-      "clearBuffer": true,      
-      "extensions": "ts",
-      "quiet": false,
-      "patterns": [
-        "src"
-      ]
-    },
-    "server": {
-      "clearBuffer": true,      
-      "patterns": [
-        "dist/filebrowser.js"
-      ]
-    }
-  },
   "scripts": {
-    "build": "ts-node build.ts",
-    "eslint": "npx eslint . --format visualstudio",
-    "tsc": "tsc",
-    "watch_build": "npm-watch build",
-    "watch_tsc": "npm-watch tsc",
-    "watch_eslint": "npm-watch eslint",
-    "watch_server": "npm-watch  server",
-    "server": "node dist/filebrowser.js"
+    "watch_build": "nodemon build.ts",
+    "watch_tsc": "nodemon --exec tsc",
+    "watch_eslint": "nodemon --exec eslint",
+    "watch_server": "nodemon --watch dist/filebrowser.js dist/filebrowser.js"
   },
   "author": "",
   "license": "ISC",
@@ -69,7 +32,6 @@
     "eslint": "^8.36.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-promise": "^6.2.0",
-    "npm-watch": "^0.13.0",
     "ts-node": "^10.9.2"
   }
 }

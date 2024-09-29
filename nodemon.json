@@ -1,0 +1,8 @@
+{
+  "events": {
+    "restart": "clear && echo %TIME%"
+  },
+  "watch": ["src"],
+  "ext":"ts",
+  "verbose":true
+}
