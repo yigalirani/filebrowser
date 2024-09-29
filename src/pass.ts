@@ -1,11 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-
 declare module 'express-session' {
   interface SessionData {
     authenticated: boolean
   }
 }
-
 export function password_protect(app_password:string|undefined){
   if (!app_password){
     console.warn('running filebrowser without a password')

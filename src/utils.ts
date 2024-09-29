@@ -1,8 +1,6 @@
 import path from 'node:path'
 import {RenderData,LegType} from './types'
-
 const {posix}=path
-
 export function timeSince(ago_time:number) {
   const cur_time = new Date().getTime()
   const ms=cur_time-ago_time  
@@ -34,18 +32,14 @@ export function timeSince(ago_time:number) {
 export function date_to_timesince(dateString: string) {
   // Parse the date string to a Date object
   const ago_time = new Date(dateString).getTime();
-
   // Get the Unix timestamp in milliseconds and convert it to seconds
-
   return timeSince(ago_time);
 }
 export function formatBytes(bytes: number, decimals = 2): string {
   if (bytes === 0) return '0 Bytes';
-
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   const size = sizes[i];
   const formattedBytes = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
@@ -62,25 +56,18 @@ export function to_posix(url:string){
   const ans2=ans1.join(posix.sep);
   return ans2
 }
-
 export function get_error(ex:any):string{
   return ex.toString().split(/:|,/)[2] 
 }
 function get_legs(path:string){
   return ['',...path.split('/').filter(Boolean)]
 }
-
 /*interface PathLeg{
   leg:string
   leg_type:LegType
 }*/
-
-
-
 //const langs=hljs.listLanguages()
 //console.log('langs',JSON.stringify(langs,null,2))
-
-
 export function parse_path_root(render_data:RenderData){
   const {parent_absolute,root_dir}=render_data
   const ans=[]
@@ -103,7 +90,6 @@ export function parse_path_root(render_data:RenderData){
   }
   return ans
 }
-
 type RenderFunc=(a:any)=>string
 export type s2any=Record<string,any>
 type RowRenderFunc=(row:s2any,name:string)=>string
@@ -112,7 +98,6 @@ type ColDef=RenderFunc|{
   row_f?:RowRenderFunc,
   title?:string
 }
-
 function call_def(coldef: ColDef, row:s2any,name:string) {
   if (typeof coldef === 'function'){
     const a=row[name]
@@ -165,7 +150,6 @@ export function mark({re,text}:{
   var words=split(re,text)
   return concat(words)
 }
-
 type COLS=Record<string,ColDef>
 export function render_table2<T extends s2any>(data:readonly T[],col_defs:COLS){
   function render_row(row:T){
@@ -181,6 +165,5 @@ export function render_table2<T extends s2any>(data:readonly T[],col_defs:COLS){
   <tr>${head}</tr>
   ${body}
   </table>`
-  
   return ans
 }

@@ -1,5 +1,4 @@
 import { promises as fs } from 'fs';
-
 interface Config {
   port          : number; // default is 80
   protocol      : 'https' | 'http'; // optional, default is http
@@ -28,7 +27,6 @@ export async function read_config(filePath: string) {
   // Read and parse the JSON configuration file
   const fileContent = await fs.readFile(filePath, 'utf-8');
   const config:Record<string,any> = JSON.parse(fileContent);
-
   const ans:Config = {
     secret:'',
     port: 80,
@@ -55,7 +53,6 @@ export async function read_config(filePath: string) {
   console.log('config',JSON.stringify(print_ans,null,2))
   return ans
 }
-
 // Example usage
 /*
 try {

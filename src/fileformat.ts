@@ -17,7 +17,6 @@ const specialFiles:Record<string,string> = {
   'Dockerfile': 'dockerfile',
   'CMakeLists.txt': 'cmake'
 };
-
 const extensionToFormat:Record<string,string> = {
   '1c': '1c',
   'abnf': 'abnf',

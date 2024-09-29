@@ -11,8 +11,6 @@ import {read_config} from './config'
 import http from 'http'
 import https from 'https'
 import {simpleGit} from 'simple-git';
-
-
 import {
   render_error_page, 
   render_image, 
@@ -20,16 +18,10 @@ import {
   render_table,
   render_simple_error_page
 } from './view';
-
 import { marked } from 'marked'
-
 import path from 'node:path';
 import {make_filter} from './filter'
 const {posix}=path
-
-
-
-
 async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a directory
   parent_absolute:string,
   base:string,
@@ -40,10 +32,8 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
   const base2=posix.basename(absolute)
   const format= guessFileFormat(base2)
   try{
-   
     const stats = await fs.stat(absolute);
     const is_dir=stats.isDirectory()
-    
     return {base:base2,format,absolute,relative,stats,is_dir}
   }catch(ex){
     return {base,format,absolute,relative,error:get_error(ex)}
@@ -66,8 +56,6 @@ async function isGitRepo(directoryPath:string) {
       return false;
   }
 }
-
-
 async function render_data_redirect_if_needed(req:Request, res:Response,cur_handler:string){
   const url=req.params[0]||'/'
   const root_dir=req.app.locals.root_dir;
@@ -99,7 +87,6 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
   if (ans.legs==undefined){
     res.redirect('/')
   }
-
   if (stats.is_dir)
     ans.is_git=await isGitRepo(parent_absolute)
   if (ans.is_git==undefined && cur_handler!='files'){
@@ -126,16 +113,12 @@ async  function handler_commits(req:Request, res:Response){
   const content=render_table2(commits,{date,hash:linked_hash(parent_relative),message:id})
   res.end(render_page(content,render_data))
 }
-
 async  function handler_branches(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'branches')  
   const {parent_absolute,parent_relative}=render_data
-
-
   const git = simpleGit(parent_absolute);
   const branches = Object.values((await git.branch()).branches)
   const content=render_table2(branches,{name:id,commit:linked_hash(parent_relative),label:id,current:bool,linkedWorkTree:id})
-
   res.end(render_page(content,render_data))
 }
 async  function handler_commitdiff(req:Request, res:Response){
@@ -148,8 +131,6 @@ async  function handler_commitdiff(req:Request, res:Response){
 //  const content=JSON.stringify(diffSummary,null,2)
   res.end(render_page(`<pre>${content}</pre>`,render_data))
 }
-
-
 async  function handler_files(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'files')
   const {parent_absolute,stats:{is_dir,error,format}}=render_data
@@ -160,11 +141,9 @@ async  function handler_files(req:Request, res:Response){
     if (is_dir){
       const stats=await get_files(render_data)
       const content=render_table(render_data,stats)
-
       res.end(render_page(content,render_data))
       return
     }
-
     if (format=='image'){
       res.end(render_image(render_data))
       return
@@ -177,7 +156,6 @@ async  function handler_files(req:Request, res:Response){
       res.end(render_page(content,render_data))
       return
     }
-
     //const format= guessFileFormat(base)
     const txt=await fs.readFile(parent_absolute, 'utf8') 
     if (format==null){
@@ -191,7 +169,6 @@ async  function handler_files(req:Request, res:Response){
     const {value,language}=await hljs.highlight(format,txt)
     render_data.language=language
     res.end(render_page(`<pre>${value}</pre>`,render_data))
-
   }catch(ex){
     const error=get_error(ex)
     res.end(render_error_page(error,render_data))
@@ -209,7 +186,6 @@ export function catcher(fn:ExpressHandler){
   };
   return ans
 }
-
 async function run_app() {
   try{
     const config=await read_config('./filebrowser.json')
@@ -217,7 +193,6 @@ async function run_app() {
     const host='0.0.0.0' //should read this from config file
     const app = express();
     app.locals.root_dir=config.root_dir
- 
     app.use(express.static('static'))
     app.use(session({secret,cookie: { maxAge: 6000000 },resave:true,saveUninitialized:true}))
     app.use(express.urlencoded({ extended: false }));
@@ -239,5 +214,4 @@ async function run_app() {
     console.warn('error string server',ex)
   }
 }
-
 run_app()

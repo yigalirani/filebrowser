@@ -15,7 +15,6 @@ export enum LegType {
   Home,
   Gray,
 }
-
 export interface RenderData{
   req             : Request,
   fields          : any

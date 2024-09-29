@@ -2,14 +2,10 @@ import {formatBytes,timeSince,encode_path,id,render_table2,s2any} from './utils'
 import {LegType,MyStats,RenderData} from './types'
 import {Stats} from 'fs'
 import {encode} from 'html-entities'
-
 import style from './style.css'
 import style_dark from './style_dark.css'
 import styleh from 'highlight.js/styles/github.css';
 //import styleh_dark from 'highlight.js/styles/github-dark.css';
-
-
-
 const HOME_ICON=` <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M8 1L1 7H3V15H6V10H10V15H13V7H15L8 1Z"  stroke-width="1" fill="none"/>
 </svg> `
@@ -41,11 +37,9 @@ const filename=function(render_data:RenderData){
           <div class=icon>${icon}</div>
           <a href=/files${encode_path(relative)}> ${filter.mark(encode(base))}
         </div>`
-
   }
 }
 }
-
 const download={
   title:' ',
   row_f(stats:s2any){
@@ -57,7 +51,6 @@ const download={
     return `<a href="/static/${encode_path(relative)}" download>${DOWNLOAD_ICON}</a>`
   }
 }
-
 function make_row_f(field:keyof Stats,f:(a:any)=>string){
   return {
     row_f(a:s2any){
@@ -68,7 +61,6 @@ function make_row_f(field:keyof Stats,f:(a:any)=>string){
     }
   }
 }  
-
 export function  render_table(render_data:RenderData,stats:MyStats[]){
   return render_table2(stats,{
     filename:filename(render_data),
@@ -78,11 +70,9 @@ export function  render_table(render_data:RenderData,stats:MyStats[]){
     changed : make_row_f('mtimeMs',timeSince)
   })
 }
-
 export function logit(_x:any){
   return ''//varlog.css+varlog.dump('logit',x,4)
 }
-
 function render_breadcrumbs(render_data:RenderData){
   const {legs,language}=render_data
   const ans=[]
@@ -97,7 +87,6 @@ function render_breadcrumbs(render_data:RenderData){
         case LegType.Regular:return `<a href='${href}'> ${leg} </a> /`
       }
     }()
-
     ans.push(render_leg)
   }
   if (language)
@@ -124,7 +113,6 @@ function render_control(render_data:RenderData){
 export function render_page(center:string,render_data:RenderData){
   const {fields,is_dark}=render_data
   const effective_style=is_dark?style_dark:style+styleh
-
   const content=`
 <html>
 <link rel="icon" type="image/png" sizes="16x16" href="data:image/png;base64,
