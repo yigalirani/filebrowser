@@ -105,16 +105,7 @@ export function parse_path_root(render_data:RenderData){
   }
   return ans
 }
-export function id(a:unknown){
-  if (a==null)
-    return ''
-  return a+''
-}
-export function bool(a:boolean){
-  if (a===true)
-    return '<div class=true>true</div>'
-  return 'false'
-}
+
 export function mark({re,text}:{
   re:RegExp|null
   text:string
@@ -139,11 +130,18 @@ export function mark({re,text}:{
 }
 type Atom=string|boolean|number|undefined
 export type s2s=Record<string,Atom>
+function render_td(a:Atom){
+  if (a==null)
+    return "<td class='undef'> </td>"
+  if (a===true)
+    return '<td class=true>true</td>'
+  return `<td>${a}</td>`
+}
 export function render_table2(
   data:readonly s2s[],
 ){
   function render_row(row:s2s){
-    const tds=Object.values(row).map(v=>`<td>${v}</td>`).join('')
+    const tds=Object.values(row).map(render_td).join('')
     return `<tr>${tds}</tr>`
   }
   if (data.length===0)
