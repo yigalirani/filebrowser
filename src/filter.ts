@@ -1,40 +1,33 @@
 import { Request} from 'express';
-export interface Filter{
-  match    : (s:string)=>boolean
-  mark     : (s:string)=>string
-  get_html : ()=>string
-}
-export function make_filter(req:Request):Filter{
-  const filter=function(){
+
+export class Filter{
+  re?:RegExp
+  filter?:string
+  constructor(req:Request){
     const ans=req.query.filter
     if (typeof ans==='string'){ 
-      return ans
-    }
-    return undefined
-  }()  
-  const re=function(){
-    if (!filter)
-      return null // Matches everything
-    return new RegExp(`(${filter})`, 'i');
-  }()
-  const match=function(base:string){
-    if (re==null)
+      this.filter=ans
+      this.re=new RegExp(`(${ans})`, 'i')
+    } 
+  }
+  match(base:string){
+    if (this.re==null)
       return true
-    return re.test(base)
+    return this.re.test(base)
   }
-  function mark(text:string){
-    if (!re) return text; 
-    return text.replace(re, '<b>$1</b>');
+  mark(text:string){
+    if (!this.re) return text; 
+    return text.replace(this.re, '<b>$1</b>');
   }
-  function get_html(){
+  get_html(){
     return `<form class=control method="get">
-    <input id=filterInput type="text" name="filter" placeholder="filter" value="${filter||''}"/>
+    <input id=filterInput type="text" name="filter" placeholder="filter" value="${this.filter||''}"/>
     <button type="submit">apply</button>
   </form>
       <script>
         (function() {
           const input = document.getElementById('filterInput');
-          const originalValue = '${filter}';
+          const originalValue = '${this.filter}';
           input.addEventListener('input', function() {
             this.classList.toggle('changed', this.value !== originalValue);
           });
@@ -42,5 +35,5 @@ export function make_filter(req:Request):Filter{
       </script>
   `
   }
-  return {match,mark,get_html}
+
 }

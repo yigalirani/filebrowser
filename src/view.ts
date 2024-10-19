@@ -80,10 +80,6 @@ function render_git_swithcer(render_data:RenderData){
   ${links}
   </div>`
 }
-function render_control(render_data:RenderData){
-  const {filter}=render_data
-  return filter.get_html()
-}
 export function render_page(center:string,render_data:RenderData){
   const {fields,is_dark}=render_data
   const effective_style=is_dark?style_dark:style+styleh
@@ -97,7 +93,7 @@ GqNYJAgFDEpQAAAzmxafI4vZWwAAAABJRU5ErkJggg==" />
   <style>${effective_style}</style>
   ${render_breadcrumbs(render_data)} 
   ${render_git_swithcer(render_data)}
-  ${render_control(render_data)}
+  ${render_data.filter.get_html()}
   ${logit({fields})}
   ${center}
 </html>`

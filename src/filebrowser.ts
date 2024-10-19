@@ -22,7 +22,7 @@ import {
 } from './view';
 import { marked } from 'marked'
 import path from 'node:path';
-import {make_filter} from './filter'
+import {Filter} from './filter'
 const {posix}=path
 async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a directory
   parent_absolute:string,
@@ -44,7 +44,7 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
 //export type MyStats = Awaited<ReturnType<typeof mystats>>
 async function get_files(render_data:RenderData){
   const {parent_absolute,root_dir,filter}=render_data
-  const files=[...await fs.readdir(parent_absolute)].filter(filter.match)
+  const files=[...await fs.readdir(parent_absolute)].filter(x=>filter.match(x))
   return await Promise.all(files.map(base=>mystats({parent_absolute,base,root_dir}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
 async function isGitRepo(directoryPath:string) {
@@ -72,7 +72,7 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
       decoded_url
     }
   const stats=await mystats({parent_absolute,base:'',root_dir})
-  const filter=make_filter(req)
+  const filter=new Filter(req)
   const ans:RenderData={
     parent_relative,
     parent_absolute,
