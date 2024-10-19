@@ -1,0 +1,90 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.3/schema.json",
+  "javascript": {
+    "globals": ["chrome"],
+    "formatter": {
+      "semicolons": "asNeeded",
+      "quoteStyle": "single"
+    }
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "lineWidth": 100
+  },
+  "files":{
+    "ignore": [
+      "unused_code",
+      "*.css",
+      "*.json",
+      "dist",
+      "old",
+      "node_nodules",
+      ".git",
+      "bookmarks",
+      "eslint.config.mjs",
+      "ext",
+      "converter",
+      "transpiled",
+      "tmp"
+    ]
+  },
+  "linter": {
+    "enabled": true, 
+    "rules": {
+      "all":true,
+      "style":{
+        "useConst":"warn",
+        "useBlockStatements":"off",
+        "useNamingConvention":"off",
+        "useTemplate":"off",
+        "useNumberNamespace":"off",
+        "noVar":"warn",
+        "noNonNullAssertion":"off",
+        "noParameterAssign":"off",
+        "useImportType":"off",
+        "useThrowOnlyError":"off",
+        "useConsistentBuiltinInstantiation":"off",
+        "useConsistentArrayType":"off",
+        "useShorthandArrayType":"off",
+        "useExplicitLengthCheck":"off",
+        "noNamespaceImport":"off",
+        "useNodejsImportProtocol":"off",
+        "noNamespace":"off",
+        "useExponentiationOperator":"off",
+        "useDefaultSwitchClause":"off"
+      },
+      "performance":{
+        "noDelete":"off",
+        "noBarrelFile":"off",
+        "useTopLevelRegex":"off"
+      },
+      "suspicious":{
+        "noDoubleEquals":{
+          "level":"warn",
+          "options": {
+            "ignoreNull": true
+          }
+        },
+        "noConfusingLabels":"off",
+        "noEmptyBlock":"warn",
+        "noRedundantUseStrict":"warn",
+        "noConsole":"off",
+        "noConsoleLog":"off"
+      },
+      "complexity":{
+        "useArrowFunction":"off",
+        "noForEach":"off",
+        "useLiteralKeys":"off",
+        "noExcessiveCognitiveComplexity":"off",
+        "useSimplifiedLogicExpression":"off"
+      },
+      "correctness":{
+        "noUnusedVariables":"warn",
+        "noUnusedLabels":"off",
+        "useImportExtensions":"off",
+        "noUndeclaredDependencies":"off",
+        "noNodejsModules":"off"
+      }     
+    }
+  }
+}

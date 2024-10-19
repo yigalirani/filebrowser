@@ -10,8 +10,10 @@ interface Config {
   cert_content? : string;
   secret        : string
 }
-async function readFileIfExists  (filename='',field:string){
+async function readFileIfExists  (field:string,filename:unknown){
   try{
+    if (typeof filename!=='string')
+      throw `missing filename for ${field}`
     const content = await fs.readFile(filename, 'utf-8');
     if (!content) {
       console.warn(`File is empty or unreadable: ${filename}`);
@@ -26,7 +28,7 @@ async function readFileIfExists  (filename='',field:string){
 export async function read_config(filePath: string) {
   // Read and parse the JSON configuration file
   const fileContent = await fs.readFile(filePath, 'utf-8');
-  const config:Record<string,any> = JSON.parse(fileContent);
+  const config:Record<string,unknown> = JSON.parse(fileContent);
   const ans:Config = {
     secret:'',
     port: 80,
@@ -34,10 +36,10 @@ export async function read_config(filePath: string) {
     root_dir: '/',
     password: '',
     ...config,
-    key_content:await readFileIfExists(config.key,'key'),
-    cert_content:await readFileIfExists(config.cert,'cert'),
+    key_content:await readFileIfExists('key',config.key),
+    cert_content:await readFileIfExists('cert',config.cert),
   };
-  if (ans.protocol=='https' &&( ans.key_content==undefined|| ans.cert_content==undefined)){
+  if (ans.protocol==='https' &&( ans.key_content===undefined|| ans.cert_content===undefined)){
     console.warn('protocol is https, but at least of of the certificate files are not found reverting to http')
     ans.protocol='http'
     if (!ans.secret||!ans.password){

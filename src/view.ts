@@ -1,6 +1,5 @@
-import {formatBytes,timeSince,encode_path,id,render_table2,s2any} from './utils'
+import {encode_path} from './utils'
 import {LegType,MyStats,RenderData} from './types'
-import {Stats} from 'fs'
 import {encode} from 'html-entities'
 import style from './style.css'
 import style_dark from './style_dark.css'
@@ -23,62 +22,37 @@ const FILE_ICON=`<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xml
 <line x1="4" y1="12" x2="10" y2="12"  stroke-width="0.5"/>
 </svg>
 `
-const filename=function(render_data:RenderData){
+export function render_filename(render_data:RenderData,stats:MyStats){
   const {filter}=render_data
-  return{
-  row_f(stats:s2any){
-    const {base,error,relative,is_dir}=stats as MyStats
-    const icon=function(){
-      if (error!=null)
-        return '&#x274C;'
-    return is_dir?'&#128193;': FILE_ICON
-    }()  
-    return`<div class=filename>
-          <div class=icon>${icon}</div>
-          <a href=/files${encode_path(relative)}> ${filter.mark(encode(base))}
-        </div>`
-  }
+  const {base,error,relative,is_dir}=stats as MyStats
+  const icon=function(){
+    if (error!=null)
+      return '&#x274C;'
+  return is_dir?'&#128193;': FILE_ICON
+  }()  
+  return`<div class=filename>
+        <div class=icon>${icon}</div>
+        <a href=/files${encode_path(relative)}> ${filter.mark(encode(base))}
+      </div>`
 }
+export function render_download(stats:MyStats){
+  const {is_dir,relative,error}=stats
+  if (error!=null)
+    return `<div class=error_txt>${encode(error)}</div>`
+  if (is_dir)
+    return ''
+  return `<a href="/static/${encode_path(relative)}" download>${DOWNLOAD_ICON}</a>`
 }
-const download={
-  title:' ',
-  row_f(stats:s2any){
-    const {is_dir,relative,error}=stats as MyStats
-    if (error!=undefined)
-      return `<div class=error_txt>${encode(error)}</div>`
-    if (is_dir)
-      return ''
-    return `<a href="/static/${encode_path(relative)}" download>${DOWNLOAD_ICON}</a>`
-  }
-}
-function make_row_f(field:keyof Stats,f:(a:any)=>string){
-  return {
-    row_f(a:s2any){
-      const {is_dir,error,stats}=a as MyStats
-      if (error||is_dir||stats==null)
-        return ''
-      return f(stats[field])
-    }
-  }
-}  
-export function  render_table(render_data:RenderData,stats:MyStats[]){
-  return render_table2(stats,{
-    filename:filename(render_data),
-    download,
-    format  : id,
-    size    : make_row_f('size',formatBytes),
-    changed : make_row_f('mtimeMs',timeSince)
-  })
-}
-export function logit(_x:any){
+
+export function logit(_x:unknown){
   return ''//varlog.css+varlog.dump('logit',x,4)
 }
 function render_breadcrumbs(render_data:RenderData){
   const {legs,language}=render_data
-  const ans=[]
+  const ans:string[]=[]
   let href='/files/'
   for (const {leg,leg_type} of legs!){ //is there a better way than using that asterics to assert non-null?
-    if (leg_type==LegType.Regular)
+    if (leg_type===LegType.Regular)
       href+=leg+'/'    
     const render_leg=function(){
       switch(leg_type){
@@ -98,7 +72,7 @@ function render_git_swithcer(render_data:RenderData){
   if (!is_git)
     return ''
   function make_link(handler:string){
-    const class_decor=(cur_handler==handler)?'class=highlited':''
+    const class_decor=(cur_handler===handler)?'class=highlited':''
     return `<a ${class_decor} href='/${handler}/${parent_relative}'>${handler}</a>`
   }
   const links=['files','branches','commits','commitdiff'].map(make_link).join('\n')
@@ -151,5 +125,5 @@ export function render_simple_error_page(message:string,error:Error){
     <h3>${error.message}</h3>
     <ul>${stack}</ul>
   </html>`  
-  return 
+
 }

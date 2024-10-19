@@ -1,8 +1,8 @@
 import * as esbuild from 'esbuild'
-import { Plugin, transform } from 'esbuild'
+import {transform } from 'esbuild'
 import { readFile } from 'fs/promises'
 
-export const CSSMinifyPlugin: Plugin = {
+export const CSSMinifyPlugin = {
     name: 'CSSMinifyPlugin',
     setup(build) {
         build.onLoad({ filter: /\.css$/ }, async (args) => {

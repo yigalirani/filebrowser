@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "watch_build": "nodemon build.ts",
+    "watch_build": "nodemon build.mjs",
     "watch_tsc": "nodemon --exec tsc",
     "watch_eslint": "nodemon --exec eslint",
     "watch_server": "nodemon --watch dist/filebrowser.js dist/filebrowser.js"
@@ -18,6 +18,7 @@
     "html-entities": "^2.5.2",
     "install": "^0.13.0",
     "marked": "^12.0.2",
+    "nodemon": "^3.1.7",
     "npm": "^10.8.1",
     "simple-git": "^3.24.0",
     "typescript": "^5.4.5",

@@ -2,7 +2,7 @@
 import express, { Request, Response,NextFunction} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,date_to_timesince,render_table2,id,bool} from './utils';
+import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2} from './utils';
 import {RenderData,MyStats} from './types'
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
@@ -10,13 +10,15 @@ import hljs from 'highlight.js'
 import {read_config} from './config'
 import http from 'http'
 import https from 'https'
-import {simpleGit} from 'simple-git';
+import {simpleGit,} from 'simple-git';
 import {
   render_error_page, 
   render_image, 
   render_page, 
-  render_table,
-  render_simple_error_page
+  //render_table,
+  render_simple_error_page,
+  render_filename,
+  render_download
 } from './view';
 import { marked } from 'marked'
 import path from 'node:path';
@@ -51,7 +53,7 @@ async function isGitRepo(directoryPath:string) {
       // Check if the directory is a Git repository by running 'git status'
       await git.status();
       return true;
-  } catch (error) {
+  } catch (_error) {
       // If an error occurs, it's likely not a Git repository
       return false;
   }
@@ -62,7 +64,7 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
   const decoded_url=decodeURI(url)
   const parent_absolute=posix.join(root_dir,decoded_url)
   const parent_relative=posix.relative(root_dir,parent_absolute)
-  var fields={
+  const fields={
       parent_absolute,
       root:root_dir,
       parent_relative,
@@ -84,33 +86,39 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
     //error:stats.error
   }
   ans.legs=parse_path_root(ans) //calculated here because on this file (the 'controler') is alowed to redirect
-  if (ans.legs==undefined){
+  if (ans.legs==null){
     res.redirect('/')
   }
   if (stats.is_dir)
     ans.is_git=await isGitRepo(parent_absolute)
-  if (ans.is_git==undefined && cur_handler!='files'){
+  if (ans.is_git==null && cur_handler!=='files'){
     res.redirect(`/files/${parent_relative}`)
   }    
   return ans
 }
-function linked_hash(parent_relative:string){
-  return function (x:string){
-    const trimmed=x.slice(0,8)
+function linked_hash2({parent_relative,hash}:{
+  parent_relative:string
+  hash:string
+}){
+    const trimmed=hash.slice(0,8)
     return `<a class=linkedhash href=/commitdiff/${trimmed}/${parent_relative}>${trimmed}</a>`
-  }  
 }
-const date={
-  f:date_to_timesince,
-  title:'time ago'
-}
+
 async  function handler_commits(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'commits')  
   const {parent_absolute,parent_relative}=render_data 
   const git = simpleGit(parent_absolute);
   const log = await git.log();
-  const commits = log.all; 
-  const content=render_table2(commits,{date,hash:linked_hash(parent_relative),message:id})
+  const  commits = log.all; 
+  //const table_builder=TableBuilder()
+  const table_data=commits.map(({date,hash,message})=>(
+    {
+      'time ago':date_to_timesince(date),
+      hash:linked_hash2({parent_relative,hash}),
+      message
+    }
+  ))
+  const content=render_table2(table_data)
   res.end(render_page(content,render_data))
 }
 async  function handler_branches(req:Request, res:Response){
@@ -118,18 +126,70 @@ async  function handler_branches(req:Request, res:Response){
   const {parent_absolute,parent_relative}=render_data
   const git = simpleGit(parent_absolute);
   const branches = Object.values((await git.branch()).branches)
-  const content=render_table2(branches,{name:id,commit:linked_hash(parent_relative),label:id,current:bool,linkedWorkTree:id})
+  const table_data=branches.map(({name,commit,current,label,linkedWorkTree})=>({
+      name,
+      commit:linked_hash2({parent_relative,hash:commit}),
+      label,
+      current,
+      linkedWorkTree
+  }))
+  const content=render_table2(table_data)
   res.end(render_page(content,render_data))
+}
+export function pk<T,K extends keyof T>(obj:T,...keys:K[]):Pick<T,K> {
+  //taken from https://stackoverflow.com/a/47232883/39939
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    const ret:any={};
+  keys.forEach(key=> {
+    ret[key]=obj[key];
+  }) 
+  return ret;
 }
 async  function handler_commitdiff(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'commitdiff')  
   const {parent_absolute}=render_data
   const git = simpleGit(parent_absolute);
-  const commit=req.params['commit']!
+  const commit=req.params.commit
+  if (commit==null){
+    res.redirect('/')
+    return
+  }
   const {files} = await git.diffSummary([`${commit}^`, commit])
-  const content=render_table2(files,{file:id,changes:id,insertions:id,deletions:id,binary:bool})
+  
+  const files_data=files.map((x)=>{
+    const {file,binary}=x
+    const ans={
+      file,
+      binary,
+      changes:0,
+      insertions:0,
+      deletions:0
+    }
+    if ('changes' in x){
+      return {...ans,...pk(x,'changes','insertions','deletions')}
+    }
+    return ans
+
+  })
+  const content=render_table2(files_data)
 //  const content=JSON.stringify(diffSummary,null,2)
   res.end(render_page(`<pre>${content}</pre>`,render_data))
+}
+async function render_dir(render_data:RenderData,res:Response){
+  const stats=await get_files(render_data)
+  const stats_data=stats.map(stats=>{
+    const {format}=stats//Property size does not exist on type 
+    return {
+      filename:render_filename(render_data,stats),
+      '':render_download(stats),
+      format  : format,
+      size    : formatBytes(stats.stats?.size),
+      changed : timeSince(stats.stats?.mtimeMs)
+    }
+  })
+  const content=render_table2(stats_data)
+  res.end(render_page(content,render_data))
+  return
 }
 async  function handler_files(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'files')
@@ -139,16 +199,13 @@ async  function handler_files(req:Request, res:Response){
       res.end(render_error_page(error,render_data))
     }
     if (is_dir){
-      const stats=await get_files(render_data)
-      const content=render_table(render_data,stats)
-      res.end(render_page(content,render_data))
-      return
+      return render_dir(render_data,res)
     }
-    if (format=='image'){
+    if (format==='image'){
       res.end(render_image(render_data))
       return
     }
-    if (format=='video'){
+    if (format==='video'){
       const content=`<br><video controls>
       <source src="/static/${parent_absolute}" type="video/mp4">
       Your browser does not support the video tag.
@@ -162,7 +219,7 @@ async  function handler_files(req:Request, res:Response){
       res.end(render_page(`<div class=info>unrecogrnized format: rendering as text</div><pre>${txt}</pre>`,render_data))
       return
     }
-    if (format=='markdown'){
+    if (format==='markdown'){
       res.end(render_page(await marked.parse(txt),render_data))
       return
     }    
@@ -204,7 +261,7 @@ async function run_app() {
     app.get('/commitdiff/:commit/*',catcher(handler_commitdiff))
     app.get('/*',handler_files)
     const server= await async function(){
-      if (protocol=='https')
+      if (protocol==='https')
         return await https.createServer({cert,key}, app)
       return await http.createServer(app);
     }()

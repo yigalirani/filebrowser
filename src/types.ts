@@ -11,13 +11,13 @@ export type MyStats={
   stats?   : Stats
 }
 export enum LegType {
-  Regular,
-  Home,
-  Gray,
+  Regular=1,
+  Home=2,
+  Gray=3,
 }
 export interface RenderData{
   req             : Request,
-  fields          : any
+  fields          : unknown,
   parent_absolute : string
   parent_relative : string,
   root_dir        : string

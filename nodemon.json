@@ -1,6 +1,6 @@
 {
   "events": {
-    "restart": "clear && echo %TIME%"
+    "resdtart": "clear && echo %TIME%"
   },
   "watch": ["src"],
   "ext":"ts",

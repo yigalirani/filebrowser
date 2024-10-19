@@ -1,14 +1,16 @@
 import path from 'node:path'
 import {RenderData,LegType} from './types'
 const {posix}=path
-export function timeSince(ago_time:number) {
-  const cur_time = new Date().getTime()
+export function timeSince(ago_time:number|undefined) {
+  if (ago_time==null)
+    return undefined
+  const cur_time = Date.now()
   const ms=cur_time-ago_time  
-  var seconds = Math.floor(ms / 1000);
-  var interval = seconds / 31536000;
+  const seconds = Math.floor(ms / 1000);
+  let interval = seconds / 31536000;
   function render_ago(unit:string){
     const floored_interval=Math.floor(interval)
-    if (floored_interval==0)
+    if (floored_interval===0)
       return floored_interval+' '+unit
     return floored_interval+' '+unit+'s'
   }
@@ -29,13 +31,20 @@ export function timeSince(ago_time:number) {
   interval = seconds
   return render_ago('second')
 }
+
 export function date_to_timesince(dateString: string) {
   // Parse the date string to a Date object
+  /*if (!isString(dateString))
+    return
+  */
   const ago_time = new Date(dateString).getTime();
   // Get the Unix timestamp in milliseconds and convert it to seconds
   return timeSince(ago_time);
 }
-export function formatBytes(bytes: number, decimals = 2): string {
+export function formatBytes(bytes: number|undefined): string|undefined {
+  if (bytes==null)
+    return undefined
+  const decimals = 2
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
@@ -56,8 +65,10 @@ export function to_posix(url:string){
   const ans2=ans1.join(posix.sep);
   return ans2
 }
-export function get_error(ex:any):string{
-  return ex.toString().split(/:|,/)[2] 
+export function get_error(ex: Error): string {
+  //if (!ex) return 'Unknown error';
+  const message = ex.message || ex.toString();
+  return message.trim();
 }
 function get_legs(path:string){
   return ['',...path.split('/').filter(Boolean)]
@@ -68,19 +79,23 @@ function get_legs(path:string){
 }*/
 //const langs=hljs.listLanguages()
 //console.log('langs',JSON.stringify(langs,null,2))
+interface Leg{
+  leg:string
+  leg_type:LegType
+}
 export function parse_path_root(render_data:RenderData){
   const {parent_absolute,root_dir}=render_data
-  const ans=[]
+  const ans:Leg[]=[]
   const parent_absolute_legs=get_legs(parent_absolute)
   const root_dir_legs=get_legs(root_dir)
   for (let i=0;i<parent_absolute_legs.length;i++){
     const leg=parent_absolute_legs[i]!
-    if (parent_absolute_legs[i]!=root_dir_legs[i]&&root_dir_legs[i]!=undefined){
+    if (parent_absolute_legs[i]!==root_dir_legs[i]&&root_dir_legs[i]!=null){
       console.warn('path dot not extend root')
       return
     }
     const leg_type=function(){
-      if (i+1==root_dir_legs.length)
+      if (i+1===root_dir_legs.length)
         return LegType.Home
       if (i+1>root_dir_legs.length)
         return LegType.Regular
@@ -90,41 +105,13 @@ export function parse_path_root(render_data:RenderData){
   }
   return ans
 }
-type RenderFunc=(a:any)=>string
-export type s2any=Record<string,any>
-type RowRenderFunc=(row:s2any,name:string)=>string
-type ColDef=RenderFunc|{
-  f?:RenderFunc,
-  row_f?:RowRenderFunc,
-  title?:string
-}
-function call_def(coldef: ColDef, row:s2any,name:string) {
-  if (typeof coldef === 'function'){
-    const a=row[name]
-    return coldef(a)
-  }
-  const {f,row_f}=coldef
-  if (row_f!=null)
-    return row_f(row,name)
-  const a=row[name]
-  if (f!=null){
-    return f(a)
-  }
-  return a
-}
-function get_title(name:string,coldef: ColDef){
-  if (typeof coldef === 'function'){
-    return name
-  }  
-  return coldef.title||name
-}
-export function id(a:any){
+export function id(a:unknown){
   if (a==null)
     return ''
   return a+''
 }
 export function bool(a:boolean){
-  if (a==true)
+  if (a===true)
     return '<div class=true>true</div>'
   return 'false'
 }
@@ -134,7 +121,7 @@ export function mark({re,text}:{
 }){
   function concat(words:string[]){
     function f(x:string,i:number){
-        if (i%2==0)
+        if (i%2===0)
             return x
         return `<b>${x}</b>`
     }
@@ -147,20 +134,23 @@ export function mark({re,text}:{
   }  
   if (re==null||text==null)
     return text
-  var words=split(re,text)
+  const words=split(re,text)
   return concat(words)
 }
-type COLS=Record<string,ColDef>
-export function render_table2<T extends s2any>(data:readonly T[],col_defs:COLS){
-  function render_row(row:T){
-    const cols=Object.entries(col_defs).map(([name,col_def])=>`<td>${call_def(col_def,row,name)}</td>`)
-    const ans=`<tr>${cols.join('\n')}</tr>`
-    return ans
+type Atom=string|boolean|number|undefined
+export type s2s=Record<string,Atom>
+export function render_table2(
+  data:readonly s2s[],
+){
+  function render_row(row:s2s){
+    const tds=Object.values(row).map(v=>`<td>${v}</td>`).join('')
+    return `<tr>${tds}</tr>`
   }
-  if (data.length==0)
+  if (data.length===0)
     return '<div class=info>(empty )</div>'
+  const first=data[0]!
   const body=data.map(render_row).join('\n')
-  const head=Object.entries(col_defs).map(([name,col_def])=>`<th>${get_title(name,col_def)}</th>`).join('\n')
+  const head=Object.keys(first).map(v=>`<th>${v}</th>`).join('')
   const ans=`<table>
   <tr>${head}</tr>
   ${body}
