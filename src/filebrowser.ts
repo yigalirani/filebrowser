@@ -11,6 +11,7 @@ import {read_config} from './config'
 import http from 'http'
 import https from 'https'
 import {simpleGit,} from 'simple-git';
+import {encode} from 'html-entities'
 import {
   render_error_page, 
   render_image, 
@@ -18,7 +19,8 @@ import {
   //render_table,
   render_simple_error_page,
   render_filename,
-  render_download
+  render_download,
+  mark
 } from './view';
 import { marked } from 'marked'
 import path from 'node:path';
@@ -115,17 +117,31 @@ function nowrap(a:string|undefined){
     return undefined
   return `<div class=nowrap>${a}</div>`
 }
-async  function handler_commits(req:Request, res:Response){
-  const render_data=await render_data_redirect_if_needed(req,res,'commits')  
-  const {parent_absolute,parent_relative}=render_data 
+async function get_commits(render_data:RenderData){
+  const {parent_absolute,re}=render_data 
   const git = simpleGit(parent_absolute);
   const log = await git.log();
-  const  commits = log.all; 
+  const  commits = [...log.all];  //copy to remove readonly
+  if (re==null||commits.length===0)
+    return commits
+  const ans:typeof commits=[]
+  for (const commit of commits){
+    const {hash,message}=commit
+    if (re.test(hash)||re.test(message))
+      ans.push(commit)
+  }
+  return ans
+   
+}
+async  function handler_commits(req:Request, res:Response){
+  const render_data=await render_data_redirect_if_needed(req,res,'commits')  
+  const {parent_relative,re}=render_data 
   //const table_builder=TableBuilder()
+  const commits=await get_commits(render_data)
   const table_data=commits.map(({date,hash,message})=>(
     {
       hash:linked_hash2({parent_relative,hash}),
-      message,
+      message:mark(re,encode(message)),
       'time ago':nowrap(date_to_timesince(date))
     }
   ))

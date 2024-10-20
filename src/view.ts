@@ -23,7 +23,7 @@ const FILE_ICON=`<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xml
 <line x1="4" y1="12" x2="10" y2="12"  stroke-width="0.5"/>
 </svg>
 `
-function mark(re:RegExp|null,text:string){
+export function mark(re:RegExp|null,text:string){
   if (re==null) return text; 
   return text.replace(re, '<b>$1</b>');
 }
