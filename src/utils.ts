@@ -145,16 +145,16 @@ export function render_table2(
     }()
     return `<th>${icon}<a href='${href}'>${col}</th>`
   }  
-  function render_row(row:s2s){
+  function render_row(row:s2s,i:number){
     const tds=Object.values(row).map(render_td).join('')
-    return `<tr>${tds}</tr>`
+    return `<tr><td>${i+1}</td>${tds}</tr>`
   }
   if (data.length===0)
     return '<div class=info>(empty )</div>'
   const body=data.map(render_row).join('\n')
   const head=Object.keys(first).map(render_title).join('')
   const ans=`<table>
-  <tr>${head}</tr>
+  <tr><th></th>${head}</tr>
   ${body}
   </table>`
   return ans
