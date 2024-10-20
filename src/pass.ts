@@ -23,7 +23,7 @@ export function password_protect(app_password:string|undefined){
       const { password } = req.body;
       if (password==app_password){
         req.session.authenticated=true
-        res.redirect('/');
+        res.redirect(req.body.returnPath+'');
         return
       }
     }
@@ -31,6 +31,7 @@ export function password_protect(app_password:string|undefined){
     <form method="post" action="/login">
       <input type="password" name="password" placeholder="Enter password" required />
       <button type="submit">Login</button>
+      <input type="hidden" name="returnPath" value="${req.path}"> 
     </form>
   `);    
   }
