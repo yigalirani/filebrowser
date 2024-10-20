@@ -124,7 +124,7 @@ async  function handler_commits(req:Request, res:Response){
       message
     }
   ))
-  const content=render_table2(table_data)
+  const content=render_table2(render_data,table_data)
   res.end(render_page(content,render_data))
 }
 async  function handler_branches(req:Request, res:Response){
@@ -139,7 +139,7 @@ async  function handler_branches(req:Request, res:Response){
       current,
       linkedWorkTree
   }))
-  const content=render_table2(table_data)
+  const content=render_table2(render_data,table_data)
   res.end(render_page(content,render_data))
 }
 export function pk<T,K extends keyof T>(obj:T,...keys:K[]):Pick<T,K> {
@@ -177,7 +177,7 @@ async  function handler_commitdiff(req:Request, res:Response){
     return ans
 
   })
-  const content=render_table2(files_data)
+  const content=render_table2(render_data,files_data)
 //  const content=JSON.stringify(diffSummary,null,2)
   res.end(render_page(`<pre>${content}</pre>`,render_data))
 }
@@ -193,7 +193,7 @@ async function render_dir(render_data:RenderData,res:Response){
       changed : timeSince(stats.stats?.mtimeMs)
     }
   })
-  const content=render_table2(stats_data)
+  const content=render_table2(render_data,stats_data)
   res.end(render_page(content,render_data))
   return
 }
@@ -256,6 +256,11 @@ async function run_app() {
     const host='0.0.0.0' //should read this from config file
     const app = express();
     app.locals.root_dir=config.root_dir
+    app.use((req, res, next) => {
+      res.charset = 'utf-8';
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      next();
+    });
     app.use(express.static('static'))
     app.use(session({secret,cookie: { maxAge: 6000000 },resave:true,saveUninitialized:true}))
     app.use(express.urlencoded({ extended: false }));

@@ -19,9 +19,10 @@ esbuild.build({
   outdir: './dist',
   sourcemap: true,
   target: 'node10',
-  minifySyntax:true, 
+  minifySyntax:false, 
   plugins:[
     CSSMinifyPlugin
   ],
   loader: { '.css': 'text' }
 })
+ 

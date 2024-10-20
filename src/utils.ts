@@ -107,8 +107,9 @@ export function parse_path_root(render_data:RenderData){
 }
 
 
-type Atom=string|boolean|number|undefined
+type Atom=string|boolean|number|undefined|string[]
 export type s2s=Record<string,Atom>
+export type s2any=Record<string,unknown>
 function render_td(a:Atom){
   if (a==null)
     return "<td class='undef'> </td>"
@@ -116,9 +117,34 @@ function render_td(a:Atom){
     return '<td class=true>true</td>'
   return `<td>${a}</td>`
 }
+function render_href(options:s2any){
+  const ans:string[]=[]
+  for (const[k,v] of Object.entries(options))
+    if (v!=null && v!=='')
+      ans.push(`${k}=${v}`)
+  if (ans.length===0)
+    return ''
+  return '?'+ans.join('&')
+}
 export function render_table2(
+  render_data:RenderData,
   data:readonly s2s[],
+  sortable=true
 ){
+  const {asc:old_asc,sort:old_sort,filter}=render_data.req.query
+  function render_title(col:string){
+    if (!sortable){
+      return `<th>${col}</th>`
+    }
+    const asc=( old_sort===col)&&!JSON.parse(old_asc+'')
+    const href=render_href({asc,sort:col,filter,old_sort})
+    const icon=function(){
+      if (col!==old_sort)
+        return ''
+      return asc?'▲':'▼'
+    }()
+    return `<th>${icon}<a href='${href}'>${col}</th>`
+  }  
   function render_row(row:s2s){
     const tds=Object.values(row).map(render_td).join('')
     return `<tr>${tds}</tr>`
@@ -127,7 +153,7 @@ export function render_table2(
     return '<div class=info>(empty )</div>'
   const first=data[0]!
   const body=data.map(render_row).join('\n')
-  const head=Object.keys(first).map(v=>`<th>${v}</th>`).join('')
+  const head=Object.keys(first).map(render_title).join('')
   const ans=`<table>
   <tr>${head}</tr>
   ${body}
