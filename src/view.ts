@@ -1,3 +1,4 @@
+import { Request} from 'express';
 import {encode_path} from './utils'
 import {LegType,MyStats,RenderData} from './types'
 import {encode} from 'html-entities'
@@ -22,9 +23,13 @@ const FILE_ICON=`<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xml
 <line x1="4" y1="12" x2="10" y2="12"  stroke-width="0.5"/>
 </svg>
 `
+function mark(re:RegExp|null,text:string){
+  if (re==null) return text; 
+  return text.replace(re, '<b>$1</b>');
+}
 export function render_filename(render_data:RenderData,stats:MyStats){
-  const {filter}=render_data
-  const {base,error,relative,is_dir}=stats as MyStats
+  const {re}=render_data
+  const {base,error,relative,is_dir}=stats
   const icon=function(){
     if (error!=null)
       return '&#x274C;'
@@ -32,7 +37,7 @@ export function render_filename(render_data:RenderData,stats:MyStats){
   }()  
   return`<div class=filename>
         <div class=icon>${icon}</div>
-        <a href=/files${encode_path(relative)}> ${filter.mark(encode(base))}
+        <a href=/files${encode_path(relative)}> ${mark(re,encode(base))}
       </div>`
 }
 export function render_download(stats:MyStats){
@@ -80,8 +85,26 @@ function render_git_swithcer(render_data:RenderData){
   ${links}
   </div>`
 }
+function get_query_form(req:Request){
+  const {filter=''}=req.query
+  return `<form class=control method="get">
+  <input id=filterInput type="text" name="filter" placeholder="filter" value="${filter}"/>
+  <button type="submit">apply</button>
+</form>
+    <script>
+      (function() {
+        const input = document.getElementById('filterInput');
+        const originalValue = '${filter}';
+        input.addEventListener('input', function() {
+          this.classList.toggle('changed', this.value !== originalValue);
+        });
+      })();
+    </script>
+`
+}
+
 export function render_page(center:string,render_data:RenderData){
-  const {fields,is_dark}=render_data
+  const {fields,is_dark,req}=render_data
   const effective_style=is_dark?style_dark:style+styleh
   const content=`
 <html>
@@ -93,7 +116,7 @@ GqNYJAgFDEpQAAAzmxafI4vZWwAAAABJRU5ErkJggg==" />
   <style>${effective_style}</style>
   ${render_breadcrumbs(render_data)} 
   ${render_git_swithcer(render_data)}
-  ${render_data.filter.get_html()}
+  ${get_query_form(req)}
   ${logit({fields})}
   ${center}
 </html>`

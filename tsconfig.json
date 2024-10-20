@@ -17,6 +17,7 @@
     "strictNullChecks"             : true,
     "noUncheckedIndexedAccess"     : true,
     "noErrorTruncation"            : true,
+    "strictPropertyInitialization": true,
     // Generate d.ts files
     "declaration": true,
     // This compiler run should

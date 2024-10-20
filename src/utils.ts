@@ -106,28 +106,7 @@ export function parse_path_root(render_data:RenderData){
   return ans
 }
 
-export function mark({re,text}:{
-  re:RegExp|null
-  text:string
-}){
-  function concat(words:string[]){
-    function f(x:string,i:number){
-        if (i%2===0)
-            return x
-        return `<b>${x}</b>`
-    }
-    return words.map(f)
-  }
-  function split(re:RegExp,value:string){
-    if (!re)
-        return [value]
-    return (value+'').split(re)
-  }  
-  if (re==null||text==null)
-    return text
-  const words=split(re,text)
-  return concat(words)
-}
+
 type Atom=string|boolean|number|undefined
 export type s2s=Record<string,Atom>
 function render_td(a:Atom){

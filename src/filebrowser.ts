@@ -22,7 +22,6 @@ import {
 } from './view';
 import { marked } from 'marked'
 import path from 'node:path';
-import {Filter} from './filter'
 const {posix}=path
 async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a directory
   parent_absolute:string,
@@ -41,10 +40,16 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
     return {base,format,absolute,relative,error:get_error(ex)}
   } 
 }
+function filter(render_data:RenderData,v:string[]){
+  const {re}=render_data
+  if (re==null)
+    return v
+  return v.filter(x=>re.test(x))
+}
 //export type MyStats = Awaited<ReturnType<typeof mystats>>
 async function get_files(render_data:RenderData){
-  const {parent_absolute,root_dir,filter}=render_data
-  const files=[...await fs.readdir(parent_absolute)].filter(x=>filter.match(x))
+  const {parent_absolute,root_dir}=render_data
+  const files=filter(render_data,[...await fs.readdir(parent_absolute)])
   return await Promise.all(files.map(base=>mystats({parent_absolute,base,root_dir}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
 async function isGitRepo(directoryPath:string) {
@@ -72,7 +77,8 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
       decoded_url
     }
   const stats=await mystats({parent_absolute,base:'',root_dir})
-  const filter=new Filter(req)
+  const {filter}=req.query
+  const re=filter&&new RegExp(`(${filter})`, 'i')||null
   const ans:RenderData={
     parent_relative,
     parent_absolute,
@@ -82,7 +88,7 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
     cur_handler,
     stats,
     req,
-    filter
+    re
     //error:stats.error
   }
   ans.legs=parse_path_root(ans) //calculated here because on this file (the 'controler') is alowed to redirect

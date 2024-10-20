@@ -1,6 +1,5 @@
 import {Stats} from 'fs'
 import {Request} from 'express';
-import {Filter} from './filter'
 export type MyStats={
   is_dir?  : boolean;
   error?   : string;
@@ -30,5 +29,5 @@ export interface RenderData{
   //error?          : string
   //format?         : string
   stats           : MyStats
-  filter          : Filter,
+  re              :RegExp|null
 }
