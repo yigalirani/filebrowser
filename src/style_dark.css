@@ -271,3 +271,6 @@ code.hljs {
   color: black;
 
 }
+.nowrap{
+  white-space: nowrap;
+}

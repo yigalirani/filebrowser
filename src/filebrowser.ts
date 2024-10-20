@@ -110,7 +110,11 @@ function linked_hash2({parent_relative,hash}:{
     const trimmed=hash.slice(0,8)
     return `<a class=linkedhash href=/commitdiff/${trimmed}/${parent_relative}>${trimmed}</a>`
 }
-
+function nowrap(a:string|undefined){
+  if (a==null)
+    return undefined
+  return `<div class=nowrap>${a}</div>`
+}
 async  function handler_commits(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'commits')  
   const {parent_absolute,parent_relative}=render_data 
@@ -122,7 +126,7 @@ async  function handler_commits(req:Request, res:Response){
     {
       hash:linked_hash2({parent_relative,hash}),
       message,
-      'time ago':date_to_timesince(date),
+      'time ago':nowrap(date_to_timesince(date))
     }
   ))
   const content=render_table2(render_data,table_data)
@@ -203,6 +207,7 @@ function sortArrayByField<T>(array: T[], render_data:RenderData): T[] {
       return asc === 'false' ? comparison : -comparison;
   });
 }
+
 async function render_dir(render_data:RenderData,res:Response){
   const stats=await get_files(render_data)
   const sorted=sortArrayByField(stats,render_data)
@@ -213,7 +218,7 @@ async function render_dir(render_data:RenderData,res:Response){
       '':render_download(stats),
       format  : format,
       size    : formatBytes(size),
-      changed : timeSince(changed)
+      changed : nowrap(timeSince(changed))
     }
   })
   const content=render_table2(render_data,stats_data)
