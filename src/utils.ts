@@ -105,9 +105,8 @@ export function parse_path_root(render_data:RenderData){
   }
   return ans
 }
-
-
 type Atom=string|boolean|number|undefined|string[]
+
 export type s2s=Record<string,Atom>
 export type s2any=Record<string,unknown>
 function render_td(a:Atom){
@@ -132,12 +131,13 @@ export function render_table2(
   sortable=true
 ){
   const {asc:old_asc,sort:old_sort,filter}=render_data.req.query
+  const first=data[0]!
   function render_title(col:string){
     if (!sortable){
       return `<th>${col}</th>`
     }
     const asc=( old_sort===col)&&!JSON.parse(old_asc+'')
-    const href=render_href({asc,sort:col,filter,old_sort})
+    const href=render_href({asc,sort:col,filter})
     const icon=function(){
       if (col!==old_sort)
         return ''
@@ -151,7 +151,6 @@ export function render_table2(
   }
   if (data.length===0)
     return '<div class=info>(empty )</div>'
-  const first=data[0]!
   const body=data.map(render_row).join('\n')
   const head=Object.keys(first).map(render_title).join('')
   const ans=`<table>

@@ -2,7 +2,7 @@
 import express, { Request, Response,NextFunction} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2} from './utils';
+import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,} from './utils';
 import {RenderData,MyStats} from './types'
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
@@ -30,14 +30,15 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
 }):Promise<MyStats>{
   const absolute=posix.join(parent_absolute,base)
   const relative=posix.relative(root_dir,absolute) //is this needed?
-  const base2=posix.basename(absolute)
-  const format= guessFileFormat(base2)
+  const filename=posix.basename(absolute)
+  const format= guessFileFormat(filename)
   try{
     const stats = await fs.stat(absolute);
     const is_dir=stats.isDirectory()
-    return {base:base2,format,absolute,relative,stats,is_dir}
+    const {size,mtimeMs:changed }=stats
+    return {filename,format,absolute,relative,stats,is_dir,size,changed}
   }catch(ex){
-    return {base,format,absolute,relative,error:get_error(ex)}
+    return {filename:base,format,absolute,relative,error:get_error(ex)}
   } 
 }
 function filter(render_data:RenderData,v:string[]){
@@ -119,9 +120,9 @@ async  function handler_commits(req:Request, res:Response){
   //const table_builder=TableBuilder()
   const table_data=commits.map(({date,hash,message})=>(
     {
-      'time ago':date_to_timesince(date),
       hash:linked_hash2({parent_relative,hash}),
-      message
+      message,
+      'time ago':date_to_timesince(date),
     }
   ))
   const content=render_table2(render_data,table_data)
@@ -181,16 +182,38 @@ async  function handler_commitdiff(req:Request, res:Response){
 //  const content=JSON.stringify(diffSummary,null,2)
   res.end(render_page(`<pre>${content}</pre>`,render_data))
 }
+function sortArrayByField<T>(array: T[], render_data:RenderData): T[] {
+  // If fieldName is null, return the array without sorting
+  const {sort,asc}=render_data.req.query
+  if (sort == null) {
+      return array;
+  }
+  const sort_fiels=sort+''as keyof T
+  return array.sort((a, b) => {
+      const fieldA = a[sort_fiels];
+      const fieldB = b[sort_fiels];
+
+      let comparison = 0;
+      if (fieldA==null||fieldA < fieldB) {
+          comparison = -1;
+      } else if (fieldB==null||fieldA > fieldB) {
+          comparison = 1;
+      }
+
+      return asc === 'false' ? comparison : -comparison;
+  });
+}
 async function render_dir(render_data:RenderData,res:Response){
   const stats=await get_files(render_data)
-  const stats_data=stats.map(stats=>{
-    const {format}=stats//Property size does not exist on type 
+  const sorted=sortArrayByField(stats,render_data)
+  const stats_data=sorted.map(stats=>{
+    const {format,size,changed}=stats//Property size does not exist on type 
     return {
       filename:render_filename(render_data,stats),
       '':render_download(stats),
       format  : format,
-      size    : formatBytes(stats.stats?.size),
-      changed : timeSince(stats.stats?.mtimeMs)
+      size    : formatBytes(size),
+      changed : timeSince(changed)
     }
   })
   const content=render_table2(render_data,stats_data)
@@ -256,7 +279,7 @@ async function run_app() {
     const host='0.0.0.0' //should read this from config file
     const app = express();
     app.locals.root_dir=config.root_dir
-    app.use((req, res, next) => {
+    app.use((_req, res, next) => {
       res.charset = 'utf-8';
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       next();

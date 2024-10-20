@@ -3,10 +3,12 @@ import {Request} from 'express';
 export type MyStats={
   is_dir?  : boolean;
   error?   : string;
-  base     : string;
+  filename : string;
   absolute : string;
   relative : string;
   format?  : string;
+  size?:number;
+  changed?:number;
   stats?   : Stats
 }
 export enum LegType {

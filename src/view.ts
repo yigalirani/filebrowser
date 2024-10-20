@@ -29,15 +29,15 @@ function mark(re:RegExp|null,text:string){
 }
 export function render_filename(render_data:RenderData,stats:MyStats){
   const {re}=render_data
-  const {base,error,relative,is_dir}=stats
+  const {filename,error,relative,is_dir}=stats
   const icon=function(){
     if (error!=null)
       return '&#x274C;'
-  return is_dir?'&#128193;': FILE_ICON
+      return is_dir?'&#128193;': FILE_ICON
   }()  
   return`<div class=filename>
         <div class=icon>${icon}</div>
-        <a href=/files${encode_path(relative)}> ${mark(re,encode(base))}
+        <a href=/files${encode_path(relative)}> ${mark(re,encode(filename))}
       </div>`
 }
 export function render_download(stats:MyStats){
