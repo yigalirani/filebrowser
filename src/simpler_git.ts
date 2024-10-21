@@ -14,6 +14,11 @@ interface BranchDiff {
     ref: string;
     refTime: number;
 }
+interface CommitDiff{
+  filename:string,
+  deletions:number,
+  additions:number
+}
 
 interface CommitInfo {
   hash: string;
@@ -118,7 +123,7 @@ export class SimplerGit {
             refTime: await this.getCommitTime(ref)
         };zzz
     }
-*/  async map_run<T>(command:string,record_sep:RegExp,field_sep:string,f:(a:string[])=>T){
+*/  async map_run<T>(command:string,record_sep:RegExp,field_sep:RegExp,f:(a:string[])=>T){
       const ans:T[]=[]
       try{
         const ret=await this.run(command)
@@ -135,7 +140,7 @@ export class SimplerGit {
     }
 
     async log(branch=''): Promise<CommitInfo[]> {
-      return this.map_run(`git log  ${branch} --pretty=format:"%H %P%n%an%n%ad%n%s%n%D%n`,/\n\n+/,'\n',row =>{
+      return this.map_run(`git log  ${branch} --pretty=format:"%H %P%n%an%n%ad%n%s%n%D%n`,/\n\n+/,/\n/,row =>{
         //todo: switch from %s to %B to get all the message
           const hashes=row[0]!.split(' ')
           const parent=hashes.slice(1).join(',')
@@ -150,7 +155,7 @@ export class SimplerGit {
         }})//must cast because ts complain that undefined
     }
     async branch(): Promise<CommitInfo[]>{
-      return await this.map_run('git for-each-ref refs/heads/ --format="%(objectname),%(authorname),%(authordate:iso),%(parent),%(subject),%(refname:short),%(if)%(HEAD)=*%(then)true%(else)false%(end)"',/\n/,',',row=>{
+      return await this.map_run('git for-each-ref refs/heads/ --format="%(objectname),%(authorname),%(authordate:iso),%(parent),%(subject),%(refname:short),%(if)%(HEAD)=*%(then)true%(else)false%(end)"',/\n/,/,/,row=>{
          return {
             hash:row[0]!,
             author:row[1]!,
@@ -160,6 +165,15 @@ export class SimplerGit {
             branch:row[5]!,
             current:row[6]!
         }})
+    }
+    async diffSummary(a:string,b:string):Promise<CommitDiff[]>{
+      return await this.map_run(`git diff --numstat ${a} ${b}`,/\n/,/\s+/,row=>{
+        return {
+          filename:row[2]!,
+          deletions:parseInt(row[0]!),
+          additions:parseInt(row[1]!)
+        }
+      })
     }
 /*
     private async getForkCommit(branch: string): Promise<string> {

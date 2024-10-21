@@ -2,7 +2,7 @@
 import express, { Request, Response,NextFunction} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,} from './utils';
+import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,s2s} from './utils';
 import {RenderData,MyStats} from './types'
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
@@ -10,7 +10,7 @@ import hljs from 'highlight.js'
 import {read_config} from './config'
 import http from 'http'
 import https from 'https'
-import {simpleGit} from 'simple-git';
+//import {simpleGit} from 'simple-git';
 import {SimplerGit} from './simpler_git';
 
 import {encode} from 'html-entities'
@@ -168,21 +168,19 @@ export function pk<T,K extends keyof T>(obj:T,...keys:K[]):Pick<T,K> {
   }) 
   return ret;
 }
-async  function handler_commitdiff(req:Request, res:Response){
+async  function handler_commitdiff (req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'commitdiff')  
   const {parent_absolute}=render_data
-  const git = simpleGit(parent_absolute);
+  const git = new SimplerGit(parent_absolute);
   const commit=req.params.commit
   if (commit==null){
     res.redirect('/')
     return
   }
-  const sumamry = await git.diffSummary([`${commit}^`, commit])
-
-  const {files}=sumamry
-  
+  const files = await git.diffSummary(`${commit}~1`, commit)
+  /*
   const files_data=files.map((x)=>{
-    const {file,binary}=x
+    const {filename,binary}=x
     const ans={
       file,
       binary,
@@ -195,8 +193,8 @@ async  function handler_commitdiff(req:Request, res:Response){
     }
     return ans
 
-  })
-  const content=render_table2(render_data,files_data)
+  })*/
+  const content=render_table2(render_data,files)
 //  const content=JSON.stringify(diffSummary,null,2)
   res.end(render_page(`<pre>${content}</pre>`,render_data))
 }
