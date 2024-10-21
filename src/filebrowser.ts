@@ -10,7 +10,9 @@ import hljs from 'highlight.js'
 import {read_config} from './config'
 import http from 'http'
 import https from 'https'
-import {simpleGit,} from 'simple-git';
+import {simpleGit} from 'simple-git';
+import {SimplerGit} from './simpler_git';
+
 import {encode} from 'html-entities'
 import {
   render_error_page, 
@@ -56,15 +58,8 @@ async function get_files(render_data:RenderData){
   return await Promise.all(files.map(base=>mystats({parent_absolute,base,root_dir}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
 async function isGitRepo(directoryPath:string) {
-  const git = simpleGit(directoryPath);
-  try {
-      // Check if the directory is a Git repository by running 'git status'
-      await git.status();
-      return true;
-  } catch (_error) {
-      // If an error occurs, it's likely not a Git repository
-      return false;
-  }
+  const git = new SimplerGit(directoryPath);
+  return await git.is_git()
 }
 async function render_data_redirect_if_needed(req:Request, res:Response,cur_handler:string){
   const url=req.params[0]||'/'
@@ -117,11 +112,11 @@ function nowrap(a:string|undefined){
     return undefined
   return `<div class=nowrap>${a}</div>`
 }
-async function get_commits(render_data:RenderData){
+async function get_filtered_commits(render_data:RenderData){
   const {parent_absolute,re}=render_data 
-  const git = simpleGit(parent_absolute);
+  const git = new SimplerGit(parent_absolute);
   const log = await git.log();
-  const  commits = [...log.all];  //copy to remove readonly
+  const  commits = [...log];  //copy to remove readonly
   if (re==null||commits.length===0)
     return commits
   const ans:typeof commits=[]
@@ -137,11 +132,12 @@ async  function handler_commits(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'commits')  
   const {parent_relative,re}=render_data 
   //const table_builder=TableBuilder()
-  const commits=await get_commits(render_data)
-  const table_data=commits.map(({date,hash,message})=>(
+  const commits=await get_filtered_commits(render_data)
+  const table_data=commits.map(({branch,date,hash,message})=>(
     {
       hash:linked_hash2({parent_relative,hash}),
       message:mark(re,encode(message)),
+      branch,
       'time ago':nowrap(date_to_timesince(date))
     }
   ))
@@ -151,14 +147,14 @@ async  function handler_commits(req:Request, res:Response){
 async  function handler_branches(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'branches')  
   const {parent_absolute,parent_relative}=render_data
-  const git = simpleGit(parent_absolute);
-  const branches = Object.values((await git.branch()).branches)
-  const table_data=branches.map(({name,commit,current,label,linkedWorkTree})=>({
-      name,
-      commit:linked_hash2({parent_relative,hash:commit}),
-      label,
+  const git = new SimplerGit(parent_absolute);
+  const branches = Object.values((await git.branch()))
+  const table_data=branches.map(({branch,hash,current,message,date})=>({
+      branch,
+      hash:linked_hash2({parent_relative,hash:hash}),
+      message,
       current,
-      linkedWorkTree
+      'time ago':nowrap(date_to_timesince(date))
   }))
   const content=render_table2(render_data,table_data)
   res.end(render_page(content,render_data))
@@ -181,7 +177,9 @@ async  function handler_commitdiff(req:Request, res:Response){
     res.redirect('/')
     return
   }
-  const {files} = await git.diffSummary([`${commit}^`, commit])
+  const sumamry = await git.diffSummary([`${commit}^`, commit])
+
+  const {files}=sumamry
   
   const files_data=files.map((x)=>{
     const {file,binary}=x
