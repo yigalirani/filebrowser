@@ -106,7 +106,8 @@ function linked_hash2({parent_relative,hash}:{
   hash:string
 }){
     const trimmed=hash.slice(0,8)
-    return `<a class=linkedhash href=/commitdiff/${trimmed}/${parent_relative}>${trimmed}</a>`
+    return `<a class=linkedhash href=/ls//~${trimmed}/${parent_relative}>${trimmed}</a>`
+    //return `<a class=linkedhash href=/commitdiff/${trimmed}/${parent_relative}>${trimmed}</a>`
 }
 function nowrap(a:string|undefined){
   if (a==null)
@@ -127,8 +128,25 @@ async function get_filtered_commits(render_data:RenderData){
       ans.push(commit)
   }
   return ans
-   
 }
+function filter_it<T>(ar:T[],re:RegExp|null,...fields:(keyof T)[]){
+  if (re==null||ar.length===0)
+    return ar
+  const ans:T[]=[]
+  for (const x of ar)
+    for (const field of fields)
+      if (re.test(x[field]+''))
+        ans.push(x)
+  return ans
+
+
+async function get_filtered_commits(render_data:RenderData){
+  const {parent_absolute,re}=render_data 
+  const git = new SimplerGit(parent_absolute)
+  const log = await git.log();
+  return filter_it(log,re,'hash','message')
+}
+
 async  function handler_commits(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'commits')  
   const {parent_relative,re}=render_data 
