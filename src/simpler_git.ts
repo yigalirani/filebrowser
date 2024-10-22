@@ -39,7 +39,7 @@ export class SimplerGit {
 
     private async run(command: string): Promise<string> {
         process.chdir(this.gitDir);
-        const { stdout } = await execAsync(command);
+        const { stdout } = await execAsync(command,{maxBuffer:100000000});
         return stdout.trim();
     }
     async is_git(){
@@ -125,7 +125,7 @@ export class SimplerGit {
     }
 */  async map_run<T>(command:string,record_sep:RegExp,field_sep:RegExp,f:(a:string[])=>T){
       const ans:T[]=[]
-      try{
+      //try{
         const ret=await this.run(command)
         const rows=ret.split(record_sep).filter(Boolean)
         for (const row of rows){
@@ -133,10 +133,10 @@ export class SimplerGit {
           ans.push(f(row_splitted))
         }
         return ans
-      }
-      catch(_ex){
-        return ans
-      }
+      //}
+      //catch(_ex){
+      //return ans
+      //}
     }
 
     async log(branch=''): Promise<CommitInfo[]> {

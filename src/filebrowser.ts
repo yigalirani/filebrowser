@@ -12,6 +12,7 @@ import http from 'http'
 import https from 'https'
 //import {simpleGit} from 'simple-git';
 import {SimplerGit} from './simpler_git';
+import * as varlog from 'varlog'
 
 import {encode} from 'html-entities'
 import {
@@ -62,7 +63,7 @@ async function isGitRepo(directoryPath:string) {
   return await git.is_git()
 }
 async function render_data_redirect_if_needed(req:Request, res:Response,cur_handler:string){
-  const url=req.params[0]||'/'
+  const url=req.params.syspath||'/'
   const root_dir=req.app.locals.root_dir;
   const decoded_url=decodeURI(url)
   const parent_absolute=posix.join(root_dir,decoded_url)
@@ -237,6 +238,29 @@ async function render_dir(render_data:RenderData,res:Response){
   res.end(render_page(content,render_data))
   return
 }
+ function handler_commit_ls(req:Request, res:Response){
+  res.end(
+		varlog.css+
+		varlog.dump('params',req.params,2)+//2 refers to depth, default is 3
+		varlog.dump('query',req.query,2)//2 refers to depth, default is 3
+		//varlog.dump('res',res)
+  )
+  //res.end(`<pre>${JSON.stringify(req,null,2)}</pre>`)
+  /*return
+  res.end(`<ol>
+    <li> ${req.params.gitpath}
+    <li>${req.params.commit}
+    <li>${req.params[0]}
+    <li>${req.params[1]}
+    <li>${req.params[2]}
+  </ol>`)*/
+}
+function redirect_to_files(req:Request, res:Response){
+  const url=req.params[0]||'/'
+  res.redirect(`/files${url}`)
+
+}
+
 async  function handler_files(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed(req,res,'files')
   const {parent_absolute,stats:{is_dir,error,format}}=render_data
@@ -306,11 +330,12 @@ async function run_app() {
     app.use(express.urlencoded({ extended: false }));
     app.use(password_protect(config.password))
     app.use('/static',express.static('/'))
-    app.get('/files*',catcher(handler_files))
-    app.get('/commits*',catcher(handler_commits))
-    app.get('/branches*',catcher(handler_branches))
-    app.get('/commitdiff/:commit/*',catcher(handler_commitdiff))
-    app.get('/*',handler_files)
+    app.get('/ls/:gitpath(*)/~:commit([0-9a-f]{5,40}):syspath(*)',handler_commit_ls)
+    app.get('/files:syspath(*)',catcher(handler_files))
+    app.get('/commits:syspath(*)',catcher(handler_commits))
+    app.get('/branches:syspath(*)',catcher(handler_branches))
+    app.get('/commitdiff/:commit/:syspath(*)',catcher(handler_commitdiff))
+    app.get('/*',redirect_to_files)
     const server= await async function(){
       if (protocol==='https')
         return await https.createServer({cert,key}, app)
