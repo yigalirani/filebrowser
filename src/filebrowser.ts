@@ -59,10 +59,9 @@ async function get_files(render_data:RenderData){
   return await Promise.all(files.map(base=>mystats({parent_absolute,base,root_dir}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
 async function isGitRepo(directoryPath:string) {
-  const git = new SimplerGit(directoryPath);
-  return await git.is_git()
+
 }
-async function render_data_redirect_if_needed(req:Request, res:Response,cur_handler:string){
+async function render_data_redirect_if_needed(req:Request, res:Response,cur_handler:string,need_git=false){
   const url=req.params.syspath||'/'
   const root_dir=req.app.locals.root_dir;
   const decoded_url=decodeURI(url)
@@ -95,10 +94,10 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
     res.redirect('/')
   }
   if (stats.is_dir)
-    ans.is_git=await isGitRepo(parent_absolute)
-  if (ans.is_git==null && cur_handler!=='files'){
+    ans.git=new SimplerGit(parent_absolute)
+  if (ans.git.is_git===false && need_git){
     res.redirect(`/files/${parent_relative}`)
-  }    
+  }
   return ans
 }
 function linked_hash2({parent_relative,hash}:{
@@ -114,21 +113,7 @@ function nowrap(a:string|undefined){
     return undefined
   return `<div class=nowrap>${a}</div>`
 }
-async function get_filtered_commits(render_data:RenderData){
-  const {parent_absolute,re}=render_data 
-  const git = new SimplerGit(parent_absolute);
-  const log = await git.log();
-  const  commits = [...log];  //copy to remove readonly
-  if (re==null||commits.length===0)
-    return commits
-  const ans:typeof commits=[]
-  for (const commit of commits){
-    const {hash,message}=commit
-    if (re.test(hash)||re.test(message))
-      ans.push(commit)
-  }
-  return ans
-}
+
 function filter_it<T>(ar:T[],re:RegExp|null,...fields:(keyof T)[]){
   if (re==null||ar.length===0)
     return ar
@@ -138,7 +123,7 @@ function filter_it<T>(ar:T[],re:RegExp|null,...fields:(keyof T)[]){
       if (re.test(x[field]+''))
         ans.push(x)
   return ans
-
+}
 
 async function get_filtered_commits(render_data:RenderData){
   const {parent_absolute,re}=render_data 
