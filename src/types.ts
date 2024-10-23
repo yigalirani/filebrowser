@@ -1,6 +1,6 @@
 import {Stats} from 'fs'
 import {Request} from 'express';
-import {SimplerGit} from './simpler_git';
+import {SimplerGit} from './simpler_git'
 export type MyStats={
   is_dir?  : boolean;
   error?   : string;
@@ -26,11 +26,12 @@ export interface RenderData{
   is_dark         : boolean
   legs?           : {leg:string,leg_type:LegType}[]
   language?       : string
-  git?         : SimplerGit;
+  is_git          : boolean
   cur_handler     : string
   //is_dir          : boolean,
   //error?          : string
   //format?         : string
   stats           : MyStats
   re              :RegExp|null
+  git             :SimplerGit
 }

@@ -2,7 +2,7 @@
 import express, { Request, Response,NextFunction} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,s2s} from './utils';
+import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2} from './utils';
 import {RenderData,MyStats} from './types'
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
@@ -12,6 +12,7 @@ import http from 'http'
 import https from 'https'
 //import {simpleGit} from 'simple-git';
 import {SimplerGit} from './simpler_git';
+
 import * as varlog from 'varlog'
 
 import {encode} from 'html-entities'
@@ -58,10 +59,13 @@ async function get_files(render_data:RenderData){
   const files=filter(render_data,[...await fs.readdir(parent_absolute)])
   return await Promise.all(files.map(base=>mystats({parent_absolute,base,root_dir}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
-async function isGitRepo(directoryPath:string) {
 
-}
-async function render_data_redirect_if_needed(req:Request, res:Response,cur_handler:string,need_git=false){
+async function render_data_redirect_if_needed({req,res,cur_handler,need_git=false}:{
+  req:Request 
+  res:Response
+  cur_handler:string
+  need_git?:boolean}
+){
   const url=req.params.syspath||'/'
   const root_dir=req.app.locals.root_dir;
   const decoded_url=decodeURI(url)
@@ -77,6 +81,8 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
   const stats=await mystats({parent_absolute,base:'',root_dir})
   const {filter}=req.query
   const re=filter&&new RegExp(`(${filter})`, 'i')||null
+  const git=new SimplerGit(parent_absolute)
+  const is_git=await git.is_git()
   const ans:RenderData={
     parent_relative,
     parent_absolute,
@@ -86,16 +92,16 @@ async function render_data_redirect_if_needed(req:Request, res:Response,cur_hand
     cur_handler,
     stats,
     req,
-    re
-    //error:stats.error
+    re,
+    git,
+    is_git
   }
   ans.legs=parse_path_root(ans) //calculated here because on this file (the 'controler') is alowed to redirect
   if (ans.legs==null){
     res.redirect('/')
   }
-  if (stats.is_dir)
-    ans.git=new SimplerGit(parent_absolute)
-  if (ans.git.is_git===false && need_git){
+
+  if (!is_git && need_git){
     res.redirect(`/files/${parent_relative}`)
   }
   return ans
@@ -124,19 +130,11 @@ function filter_it<T>(ar:T[],re:RegExp|null,...fields:(keyof T)[]){
         ans.push(x)
   return ans
 }
-
-async function get_filtered_commits(render_data:RenderData){
-  const {parent_absolute,re}=render_data 
-  const git = new SimplerGit(parent_absolute)
-  const log = await git.log();
-  return filter_it(log,re,'hash','message')
-}
-
 async  function handler_commits(req:Request, res:Response){
-  const render_data=await render_data_redirect_if_needed(req,res,'commits')  
-  const {parent_relative,re}=render_data 
-  //const table_builder=TableBuilder()
-  const commits=await get_filtered_commits(render_data)
+  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commits'})  
+  const {parent_relative,re,git}=render_data 
+
+  const commits=filter_it(await git.log(),re,'hash','message')
   const table_data=commits.map(({branch,date,hash,message})=>(
     {
       hash:linked_hash2({parent_relative,hash}),
@@ -149,9 +147,8 @@ async  function handler_commits(req:Request, res:Response){
   res.end(render_page(content,render_data))
 }
 async  function handler_branches(req:Request, res:Response){
-  const render_data=await render_data_redirect_if_needed(req,res,'branches')  
-  const {parent_absolute,parent_relative}=render_data
-  const git = new SimplerGit(parent_absolute);
+  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'branches'})  
+  const {parent_relative,git}=render_data
   const branches = Object.values((await git.branch()))
   const table_data=branches.map(({branch,hash,current,message,date})=>({
       branch,
@@ -173,7 +170,7 @@ export function pk<T,K extends keyof T>(obj:T,...keys:K[]):Pick<T,K> {
   return ret;
 }
 async  function handler_commitdiff (req:Request, res:Response){
-  const render_data=await render_data_redirect_if_needed(req,res,'commitdiff')  
+  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commitdiff'})
   const {parent_absolute}=render_data
   const git = new SimplerGit(parent_absolute);
   const commit=req.params.commit
@@ -265,7 +262,7 @@ function redirect_to_files(req:Request, res:Response){
 }
 
 async  function handler_files(req:Request, res:Response){
-  const render_data=await render_data_redirect_if_needed(req,res,'files')
+  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'files'})
   const {parent_absolute,stats:{is_dir,error,format}}=render_data
   try{
     if (error){
