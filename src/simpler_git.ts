@@ -15,6 +15,13 @@ interface _BranchDiff {
     ref: string;
     refTime: number;
 }
+interface LsTree extends Record<string,number|string|undefined>{
+  mode:string
+  type:string
+  hash:string
+  size:number|undefined
+  path:string
+}
 interface CommitDiff extends Record<string,number|string>{
   filename:string,
   deletions:number,
@@ -29,6 +36,22 @@ interface CommitInfo {
   message: string;
   parent: string;
   current:string
+}
+function normalize_path(str: string): string {
+  if (str==null||str==='')
+    return ''
+  return str.endsWith('/') ? str : `${str}/`;
+}
+function parse_int(x:string|undefined){
+  const ans=parseInt(x+'')
+  if (isNaN(ans))
+    return 0
+  return ans
+}
+function str(x:string|undefined){
+  if (x==null)
+    return ''
+  return x  
 }
 
 export class SimplerGit {
@@ -85,7 +108,7 @@ export class SimplerGit {
     }
 
     async lsHash(commitRef: string): Promise<[string, string][]> {
-        const result = await this.run(`git ls-tree -r ${commitRef}`);
+        const result = await this.run(``git ls-tree` -r ${commitRef}`);
         return result.split('\n').map(x => {
             const [hash, path] = x.split(' ')[2].split('\t');
             return [hash, path];
@@ -143,7 +166,19 @@ export class SimplerGit {
       //return ans
       //}
     }
-
+    async ls(commit:string,path:string): Promise<LsTree[]>{
+      return this.map_run({
+        command:`git ls-tree -l ${commit} ${normalize_path(path)}`,
+        record_sep:/\n/,
+        field_sep:/\s+/},
+      row=>({
+        mode:str(row[0]),
+        type:str(row[1]),
+        hash:str(row[2]),
+        size:parse_int(row[3]),
+        path:str(row[4])
+      }))
+    }
     async log(branch=''): Promise<CommitInfo[]> {
       return this.map_run({
         command:`git log  ${branch} --pretty=format:"%H %P%n%an%n%ad%n%s%n%D%n`,
@@ -151,15 +186,15 @@ export class SimplerGit {
         field_sep:/\n/},
         row =>{
         //todo: switch from %s to %B to get all the message
-          const hashes=row[0]!.split(' ')
+          const hashes=str(row[0]).split(' ')
           const parent=hashes.slice(1).join(',')
           return{
-            hash:hashes[0]!,
-            author:row[1]!,
-            date:row[2]!,
+            hash:str(hashes[0]),
+            author:str(row[1]),
+            date:str(row[2]),
             parent,
-            message: row[3]!,
-            branch:row[4]!,
+            message:str(row[3]),
+            branch:str(row[4]),
             current:''
         }})//must cast because ts complain that undefined
     }

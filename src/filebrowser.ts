@@ -238,13 +238,18 @@ async function render_dir(render_data:RenderData,res:Response){
   res.end(render_page(content,render_data))
   return
 }
- function handler_commit_ls(req:Request, res:Response){
-  res.end(
-		varlog.css+
-		varlog.dump('params',req.params,2)+//2 refers to depth, default is 3
-		varlog.dump('query',req.query,2)//2 refers to depth, default is 3
-		//varlog.dump('res',res)
-  )
+async function handler_commit_ls(req:Request, res:Response){
+  const {gitpath,commit}=req.params
+  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'handler_commit_ls',need_git:true})
+  const {git,re}=render_data
+  const ret=filter_it(await git.ls(commit!,gitpath!),re,'path')
+  const content=render_table2(render_data,ret)
+  const debug=		varlog.css+
+  varlog.dump('params',req.params,2)+//2 refers to depth, default is 3
+  varlog.dump('query',req.query,2)//2 refers to depth, default is 3
+  res.end(render_page(debug+content,render_data))
+ }
+
   //res.end(`<pre>${JSON.stringify(req,null,2)}</pre>`)
   /*return
   res.end(`<ol>
@@ -254,7 +259,7 @@ async function render_dir(render_data:RenderData,res:Response){
     <li>${req.params[1]}
     <li>${req.params[2]}
   </ol>`)*/
-}
+
 function redirect_to_files(req:Request, res:Response){
   const url=req.params[0]||'/'
   res.redirect(`/files${url}`)
@@ -330,7 +335,7 @@ async function run_app() {
     app.use(express.urlencoded({ extended: false }));
     app.use(password_protect(config.password))
     app.use('/static',express.static('/'))
-    app.get('/ls/:gitpath(*)/~:commit([0-9a-f]{5,40}):syspath(*)',handler_commit_ls)
+    app.get('/ls/:gitpath(*)/~:commit([0-9a-f]{5,40}):syspath(*)',catcher(handler_commit_ls))
     app.get('/files:syspath(*)',catcher(handler_files))
     app.get('/commits:syspath(*)',catcher(handler_commits))
     app.get('/branches:syspath(*)',catcher(handler_branches))
