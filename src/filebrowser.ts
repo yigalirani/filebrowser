@@ -2,7 +2,7 @@
 import express, { Request, Response,NextFunction} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2} from './utils';
+import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,encode_path} from './utils';
 import {RenderData,MyStats} from './types'
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
@@ -11,7 +11,7 @@ import {read_config} from './config'
 import http from 'http'
 import https from 'https'
 //import {simpleGit} from 'simple-git';
-import {SimplerGit} from './simpler_git';
+import {SimplerGit,LsTree} from './simpler_git';
 
 import * as varlog from 'varlog'
 
@@ -24,7 +24,8 @@ import {
   render_simple_error_page,
   render_filename,
   render_download,
-  mark
+  mark,
+  FILE_ICON
 } from './view';
 import { marked } from 'marked'
 import path from 'node:path';
@@ -37,14 +38,14 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
   const absolute=posix.join(parent_absolute,base)
   const relative=posix.relative(root_dir,absolute) //is this needed?
   const filename=posix.basename(absolute)
-  const format= guessFileFormat(filename)
+  //const format= guessFileFormat(filename)
   try{
     const stats = await fs.stat(absolute);
     const is_dir=stats.isDirectory()
     const {size,mtimeMs:changed }=stats
-    return {filename,format,absolute,relative,stats,is_dir,size,changed}
+    return {filename,relative,is_dir,size,changed}
   }catch(ex){
-    return {filename:base,format,absolute,relative,error:get_error(ex)}
+    return {filename:base,relative,error:get_error(ex),is_dir:false}
   } 
 }
 function filter(render_data:RenderData,v:string[]){
@@ -220,16 +221,29 @@ function sortArrayByField<T>(array: T[], render_data:RenderData): T[] {
       return asc === 'false' ? comparison : -comparison;
   });
 }
-
+function icon_div(content:string){
+  return `<div class=icon>${content}</div>`
+}
+function icon(is_dir:boolean,error:string|undefined){
+  if (error!=null)
+    return icon_div('&#x274C;')
+  return icon_div(is_dir?'&#128193;': FILE_ICON)
+}
 async function render_dir(render_data:RenderData,res:Response){
   const stats=await get_files(render_data)
+  const {re}=render_data
   const sorted=sortArrayByField(stats,render_data)
   const stats_data=sorted.map(stats=>{
-    const {format,size,changed}=stats//Property size does not exist on type 
+    const {error,filename,is_dir,size,changed,relative}=stats//Property size does not exist on type 
     return {
-      filename:render_filename(render_data,stats),
+      filename:function(){
+        return`<div class=filename>
+            ${icon(is_dir,error)}
+              <a href=/files${encode_path(relative)}>${mark(re,encode(filename))}
+            </div>`        
+      }(),
       '':render_download(stats),
-      format  : format,
+      format:guessFileFormat(filename),
       size    : formatBytes(size),
       changed : nowrap(timeSince(changed))
     }
@@ -242,12 +256,13 @@ async function handler_commit_ls(req:Request, res:Response){
   const {gitpath,commit}=req.params
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'handler_commit_ls',need_git:true})
   const {git,re}=render_data
-  const ret=filter_it(await git.ls(commit!,gitpath!),re,'path')
-  const content=render_table2(render_data,ret)
-  const debug=		varlog.css+
-  varlog.dump('params',req.params,2)+//2 refers to depth, default is 3
-  varlog.dump('query',req.query,2)//2 refers to depth, default is 3
-  res.end(render_page(debug+content,render_data))
+  const ret=filter_it(await git.ls(commit!,gitpath!),re,'filename')
+  const body=ret.map(x=>({
+    filename:'dfdf'
+    
+  }))
+  const content=render_table2(render_data,body)
+  res.end(render_page(content,render_data))
  }
 
   //res.end(`<pre>${JSON.stringify(req,null,2)}</pre>`)
@@ -268,7 +283,7 @@ function redirect_to_files(req:Request, res:Response){
 
 async  function handler_files(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'files'})
-  const {parent_absolute,stats:{is_dir,error,format}}=render_data
+  const {parent_absolute,stats:{is_dir,error,filename}}=render_data
   try{
     if (error){
       res.end(render_error_page(error,render_data))
@@ -276,6 +291,7 @@ async  function handler_files(req:Request, res:Response){
     if (is_dir){
       return render_dir(render_data,res)
     }
+    const format=guessFileFormat(filename)
     if (format==='image'){
       res.end(render_image(render_data))
       return

@@ -3,6 +3,7 @@ import {encode_path} from './utils'
 import {LegType,MyStats,RenderData} from './types'
 import {encode} from 'html-entities'
 import style from './style.css'
+import {LsTree} from './simpler_git'
 import style_dark from './style_dark.css'
 import styleh from 'highlight.js/styles/github.css';
 //import styleh_dark from 'highlight.js/styles/github-dark.css';
@@ -14,7 +15,7 @@ const DOWNLOAD_ICON=`<svg width="16" height="16" viewBox="0 0 16 16" fill="none"
 <path d="M5 8L8 11L11 8"  stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="3" y="13" width="10" height="0.5" />
 </svg>`
-const FILE_ICON=`<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+export const FILE_ICON=`<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M3 2H10L13 5V14H3V2Z" ></path>
 <path d="M10 2V5H13"  ></path>
 <line x1="4" y1="6" x2="10" y2="6"  stroke-width="0.5"/>
@@ -38,6 +39,17 @@ export function render_filename(render_data:RenderData,stats:MyStats){
   return`<div class=filename>
         <div class=icon>${icon}</div>
         <a href=/files${encode_path(relative)}> ${mark(re,encode(filename))}
+      </div>`
+}
+export function render_filename_git(render_data:RenderData,stats:LsTree){
+  const {re,parent_relative}=render_data
+  const {filename,is_dir}=stats
+  const icon=function(){
+    return is_dir?'&#128193;': FILE_ICON
+  }()  
+  return`<div class=filename>
+        <div class=icon>${icon}</div>
+        <a href=/files${encode_path(parent_relative)}> ${mark(re,encode(filename))}
       </div>`
 }
 export function render_download(stats:MyStats){

@@ -2,15 +2,15 @@ import {Stats} from 'fs'
 import {Request} from 'express';
 import {SimplerGit} from './simpler_git'
 export type MyStats={
-  is_dir?  : boolean;
+  is_dir  : boolean;
   error?   : string;
   filename : string;
-  absolute : string;
-  relative : string;
+  //absolute : string;
+  relative : string; //path of the file relative to project root 
   format?  : string;
   size?:number;
   changed?:number;
-  stats?   : Stats
+  //stats?   : Stats
 }
 export enum LegType {
   Regular=1,

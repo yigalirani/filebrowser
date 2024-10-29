@@ -1,10 +1,10 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import path from 'node:path';
+const {posix}=path
 //import { s2s } from './utils';
 
 const execAsync = promisify(exec);
-
-
 
 interface _BranchDiff {
     forkCommit: string;
@@ -15,12 +15,12 @@ interface _BranchDiff {
     ref: string;
     refTime: number;
 }
-interface LsTree extends Record<string,number|string|undefined>{
+export interface LsTree {
   mode:string
-  type:string
+  is_dir:boolean
   hash:string
   size:number|undefined
-  path:string
+  filename:string
 }
 interface CommitDiff extends Record<string,number|string>{
   filename:string,
@@ -173,10 +173,10 @@ export class SimplerGit {
         field_sep:/\s+/},
       row=>({
         mode:str(row[0]),
-        type:str(row[1]),
+        is_dir:row[1]=='tree',
         hash:str(row[2]),
         size:parse_int(row[3]),
-        path:str(row[4])
+        filename:posix.basename(row[4]||'')
       }))
     }
     async log(branch=''): Promise<CommitInfo[]> {
