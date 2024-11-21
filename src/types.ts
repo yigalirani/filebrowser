@@ -17,21 +17,21 @@ export enum LegType {
   Home=2,
   Gray=3,
 }
-export interface RenderData{
+export interface RenderData {
   req             : Request,
   fields          : unknown,
-  parent_absolute : string
+  parent_absolute : string,
   parent_relative : string,
-  root_dir        : string
-  is_dark         : boolean
-  legs?           : {leg:string,leg_type:LegType}[]
-  language?       : string
-  is_git          : boolean
-  cur_handler     : string
-  //is_dir          : boolean,
-  //error?          : string
-  //format?         : string
-  stats           : MyStats
-  re              :RegExp|null
-  git             :SimplerGit
+  root_dir        : string,
+  is_dark         : boolean,
+  legs?           : {leg: string, leg_type: LegType}[],
+  language?       : string,
+  is_git          : boolean,
+  cur_handler     : string,
+  stats           : MyStats,
+  re              : RegExp | null,
+  git             : SimplerGit,
+  commit          : string | undefined,
+  commit2         : string | undefined,
+  //[key: string]   : any
 }

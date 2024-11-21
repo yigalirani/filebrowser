@@ -109,6 +109,18 @@ type Atom=string|boolean|number|undefined|string[]
 
 export type s2s=Record<string,Atom>
 export type s2any=Record<string,unknown>
+export function render_fields<T extends object> (obj:T,...fields:string[]){
+  const ans:string[]=[]
+  for (const field of fields){
+    const value=obj[field]  
+    if ( value!= null) {
+      ans.push(`<tr><td>${field}</td><td>${value}</td></tr>`) ;
+    }
+  }
+  if (ans.length==0)
+    return ''
+  return `<table class=fieldstable>${ans.join('\n')}</table>`
+}
 function render_td(a:Atom){
   if (a==null)
     return "<td class='undef'> </td>"

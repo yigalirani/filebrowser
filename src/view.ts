@@ -1,5 +1,5 @@
 import { Request} from 'express';
-import {encode_path} from './utils'
+import {encode_path,render_fields} from './utils'
 import {LegType,MyStats,RenderData} from './types'
 import {encode} from 'html-entities'
 import style from './style.css'
@@ -127,6 +127,7 @@ CItjn0szWGBJTVoGSCjWs8TleQCQYV95evdxkFT8Kpe0PLDi5WfKd4LUsN5zS1sKFolt8bwAZrCa
 GqNYJAgFDEpQAAAzmxafI4vZWwAAAABJRU5ErkJggg==" />
   <style>${effective_style}</style>
   ${render_breadcrumbs(render_data)} 
+  ${render_fields(render_data,'commit','commit2')} 
   ${render_git_swithcer(render_data)}
   ${get_query_form(req)}
   ${logit({fields})}

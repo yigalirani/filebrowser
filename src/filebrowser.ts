@@ -50,11 +50,11 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
 }
 const hex = '([0-9a-fA-F]{5,40})';
 const routes = {
-  ls: `/ls/:commit${hex}/:syspath(*)//:gitpath(*)`,
+  ls: `/ls:syspath(*)/:commit${hex}/:gitpath(*)`,
   files: '/files:syspath(*)',
-  commits: '/commits/:syspath',
-  branches: '/branches/:syspath',
-  commitDiff: `/commitdiff/:commit1${hex}/:commit2${hex}/:syspath`,
+  commits: '/commits:syspath(*)',
+  branches: '/branches:syspath(*)',
+  commitDiff: `/commitdiff:syspath(*)/:commit1${hex}/:commit2${hex}/`,
 };
 
 function filter(render_data:RenderData,v:string[]){
@@ -77,6 +77,8 @@ async function render_data_redirect_if_needed({req,res,cur_handler,need_git=fals
   need_git?:boolean}
 ){
   const url=req.params.syspath||'/'
+  const commit=req.params.commit
+  const commit2=req.params.commit2
   const root_dir=req.app.locals.root_dir;
   const decoded_url=decodeURI(url)
   const parent_absolute=posix.join(root_dir,decoded_url)
@@ -104,7 +106,9 @@ async function render_data_redirect_if_needed({req,res,cur_handler,need_git=fals
     req,
     re,
     git,
-    is_git
+    is_git,
+    commit,
+    commit2
   }
   ans.legs=parse_path_root(ans) //calculated here because on this file (the 'controler') is alowed to redirect
   if (ans.legs==null){
@@ -121,7 +125,7 @@ function linked_hash2({parent_relative,hash}:{
   hash:string
 }){
     const trimmed=hash.slice(0,8)
-    return `<a class=linkedhash href=/ls//~${trimmed}/${parent_relative}>${trimmed}</a>`
+    return `<a class=linkedhash href=/ls/${parent_relative}/${hash}/>${trimmed}</a>`
     //return `<a class=linkedhash href=/commitdiff/${trimmed}/${parent_relative}>${trimmed}</a>`
 }
 function nowrap(a:string|undefined){
@@ -261,9 +265,9 @@ async function render_dir(render_data:RenderData,res:Response){
   res.end(render_page(content,render_data))
   return
 }
-async function handler_commit_ls(req:Request, res:Response){
+async function handler_ls(req:Request, res:Response){
   const {gitpath,commit}=req.params
-  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'handler_commit_ls',need_git:true})
+  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'handler_ls',need_git:true})
   const {git,re}=render_data
   const ret=filter_it(await git.ls(commit!,gitpath!),re,'filename')
   const body=ret.map(x=>({
@@ -360,7 +364,7 @@ async function run_app() {
     app.use(express.urlencoded({ extended: false }));
     app.use(password_protect(config.password))
     app.use('/static',express.static('/'))
-    app.get(routes.ls,catcher(handler_commit_ls))
+    app.get(routes.ls,catcher(handler_ls))
     app.get(routes.files,catcher(handler_files))
     app.get(routes.commits,catcher(handler_commits))
     app.get(routes.branches,catcher(handler_branches))
