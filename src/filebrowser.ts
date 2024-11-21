@@ -48,6 +48,15 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
     return {filename:base,relative,error:get_error(ex),is_dir:false}
   } 
 }
+const hex = '([0-9a-fA-F]{5,40})';
+const routes = {
+  ls: `/ls/:commit${hex}/:syspath(*)//:gitpath(*)`,
+  files: '/files:syspath(*)',
+  commits: '/commits/:syspath',
+  branches: '/branches/:syspath',
+  commitDiff: `/commitdiff/:commit1${hex}/:commit2${hex}/:syspath`,
+};
+
 function filter(render_data:RenderData,v:string[]){
   const {re}=render_data
   if (re==null)
@@ -351,11 +360,11 @@ async function run_app() {
     app.use(express.urlencoded({ extended: false }));
     app.use(password_protect(config.password))
     app.use('/static',express.static('/'))
-    app.get('/ls/:gitpath(*)/~:commit([0-9a-f]{5,40}):syspath(*)',catcher(handler_commit_ls))
-    app.get('/files:syspath(*)',catcher(handler_files))
-    app.get('/commits:syspath(*)',catcher(handler_commits))
-    app.get('/branches:syspath(*)',catcher(handler_branches))
-    app.get('/commitdiff/:commit/:syspath(*)',catcher(handler_commitdiff))
+    app.get(routes.ls,catcher(handler_commit_ls))
+    app.get(routes.files,catcher(handler_files))
+    app.get(routes.commits,catcher(handler_commits))
+    app.get(routes.branches,catcher(handler_branches))
+    app.get(routes.commitDiff,catcher(handler_commitdiff))
     app.get('/*',redirect_to_files)
     const server= await async function(){
       if (protocol==='https')
