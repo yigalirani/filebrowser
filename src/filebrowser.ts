@@ -174,15 +174,7 @@ async  function handler_branches(req:Request, res:Response){
   const content=render_table2(render_data,table_data)
   res.end(render_page(content,render_data))
 }
-export function pk<T,K extends keyof T>(obj:T,...keys:K[]):Pick<T,K> {
-  //taken from https://stackoverflow.com/a/47232883/39939
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    const ret:any={};
-  keys.forEach(key=> {
-    ret[key]=obj[key];
-  }) 
-  return ret;
-}
+
 async  function handler_commitdiff (req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commitdiff'})
   const {parent_absolute}=render_data

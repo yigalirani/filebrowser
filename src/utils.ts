@@ -109,12 +109,21 @@ type Atom=string|boolean|number|undefined|string[]
 
 export type s2s=Record<string,Atom>
 export type s2any=Record<string,unknown>
-export function render_fields<T extends object> (obj:T,...fields:string[]){
+export function pk<T,K extends keyof T>(obj:T,...keys:K[]):Pick<T,K> {
+  //taken from https://stackoverflow.com/a/47232883/39939
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    const ret:any={};
+  keys.forEach(key=> {
+    ret[key]=obj[key];
+  }) 
+  return ret;
+}
+export function render_fields<T,K extends keyof T>  (obj:T,...fields:K[]){
   const ans:string[]=[]
   for (const field of fields){
     const value=obj[field]  
     if ( value!= null) {
-      ans.push(`<tr><td>${field}</td><td>${value}</td></tr>`) ;
+      ans.push(`<tr><td>${String(field)}</td><td>${value}</td></tr>`) ;
     }
   }
   if (ans.length==0)
