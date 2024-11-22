@@ -131,12 +131,35 @@ export function render_fields<T,K extends keyof T>  (obj:T,...fields:K[]){
     return ''
   return `<table class=fieldstable>${ans.join('\n')}</table>`
 }
-function render_td(a:Atom){
+export function isAtom(x: unknown): x is Atom {
+  if (x == null) return false
+  return ['number', 'string', 'boolean'].includes(typeof x)
+}
+type DataCell={
+  x:Atom,
+  content:string|undefined
+}|Atom
+
+
+function calc_content(a:DataCell){
   if (a==null)
+    return undefined
+  if (isAtom(a))
+    return a
+  return a.content
+}
+function calc_x(a:DataCell){
+  if (isAtom(a))
+    return a
+  return a.x
+}
+
+function render_td(a:DataCell|undefined){
+  const content=calc_content(a)   
+  if (content==null)
     return "<td class='undef'> </td>"
-  if (a===true)
-    return '<td class=true>true</td>'
-  return `<td>${a}</td>`
+
+  return `<td>${content}</td>`
 }
 function render_href(options:s2any){
   const ans:string[]=[]
@@ -184,7 +207,10 @@ export function render_table2(
   </table>`
   return ans
 }
-export function sortArrayByField<T>(array:  T[], req:Request) {
+type DataRow=Record<string,DataCell>
+export type DataTable=DataRow[]
+
+export function sortArrayByField<T>(array:  DataTable, req:Request) {
   // If fieldName is null, return the array without sorting
   const {sort,asc}=req.query
   if (sort == null) {
@@ -192,12 +218,15 @@ export function sortArrayByField<T>(array:  T[], req:Request) {
   }
   const sort_fiels=sort+''as keyof T
   return array.sort((a, b) => {
-      const fieldA = a[sort_fiels];
-      const fieldB = b[sort_fiels];
-
+      const fieldA = calc_x(a[sort_fiels]);
+      const fieldB = calc_x(b[sort_fiels]);
+      if (fieldA==null&&fieldB==null)
+        return 0
       let comparison = 0;
-      if (fieldA==null||fieldA < fieldB) {
-          comparison = -1;
+      if (fieldA==null) 
+        return asc === 'false' ? 1 : -1;
+      if (fieldB==null) {
+        return asc === 'false' ? 1 : -1;        
       } else if (fieldB==null||fieldA > fieldB) {
           comparison = 1;
       }
@@ -205,7 +234,8 @@ export function sortArrayByField<T>(array:  T[], req:Request) {
       return asc === 'false' ? comparison : -comparison;
   });
 }
-type RenderFunc=(a:s2s)=>string
+
+
 export function filter_it<T>(ar:T[],re:RegExp|null,...fields:(keyof T)[]){
   if (re==null||ar.length===0)
     return ar
@@ -216,25 +246,30 @@ export function filter_it<T>(ar:T[],re:RegExp|null,...fields:(keyof T)[]){
         ans.push(x)
   return ans
 }
+type FlexBool=boolean|string[]
+function flex_bool(value: FlexBool, col: string){
+  if (typeof value==='boolean')
+    return value
+  return value.includes(col)
+  
+}
 export function render_table3({
   req,
-  data,
+  body,
   sortable=true,
-  render_func,
-  titles={}
+  filterable=true,
 }:{
   req:Request,
-  data:s2s[],
-  sortable:boolean,
-  render_func:RenderFunc,
-  titles:Record<string,string>,
+  body:DataTable,
+  sortable?:FlexBool,
+  filterable?:FlexBool,
+
 }){
   const {asc:old_asc,sort:old_sort,filter}=req.query
-  const first=data[0]!
+  const first=body[0]!
   function render_title(col:string){
-    if (!sortable){
-      const title=titles[col]||col
-      return `<th>${title}</th>`
+    if (!flex_bool(sortable,col)){
+      return `<th>${col}</th>`
     }
     const asc=( old_sort===col)&&!JSON.parse(old_asc+'')
     const href=render_href({asc,sort:col,filter})
@@ -247,6 +282,27 @@ export function render_table3({
   }  
   const head=Object.keys(first).map(render_title).join('')
   const re=filter&&new RegExp(`(${filter})`, 'i')||null  
-  sortArrayByField(data,req)
+  sortArrayByField(body,req)
+  const filtered_fields=function(){
+    if (filterable===true)
+      return Object.keys(first)
+    if (filterable===false)
+      return []
+    return filterable
+  }()
+  const filtered=filter_it(body,re,...filtered_fields)
+  if (filtered.length===0)
+    return '<div class=info>(empty )</div>'
+  function render_row(row:DataRow,i:number){
+    const tds=Object.values(row).map(render_td).join('')
+    return `<tr><td>${i+1}</td>${tds}</tr>`
+  }
+  const body2=body.map(render_row).join('\n')
+
+  const ans=`<table>
+  <tr><th></th>${head}</tr>
+  ${body2}
+  </table>`
+  return ans
 
 }

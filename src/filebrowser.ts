@@ -2,7 +2,7 @@
 import express, { Request, Response,NextFunction} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,encode_path,sortArrayByField,filter_it} from './utils';
+import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,encode_path,DataTable,filter_it,render_table3} from './utils';
 import {RenderData,MyStats} from './types'
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
@@ -66,7 +66,8 @@ function filter(render_data:RenderData,v:string[]){
 //export type MyStats = Awaited<ReturnType<typeof mystats>>
 async function get_files(render_data:RenderData){
   const {parent_absolute,root_dir}=render_data
-  const files=filter(render_data,[...await fs.readdir(parent_absolute)])
+  //const files=filter(render_data,[...await fs.readdir(parent_absolute)])
+  const files=await fs.readdir(parent_absolute)
   return await Promise.all(files.map(base=>mystats({parent_absolute,base,root_dir}))) //thank you https://stackoverflow.com/a/40140562/39939
 }
 
@@ -75,7 +76,7 @@ async function render_data_redirect_if_needed({req,res,cur_handler,need_git=fals
   res:Response
   cur_handler:string
   need_git?:boolean}
-){
+){ 
   const url=req.params.syspath||'/'
   const commit=req.params.commit
   const commit2=req.params.commit2
@@ -207,24 +208,27 @@ function icon(is_dir:boolean,error:string|undefined){
 }
 async function render_dir(render_data:RenderData,res:Response){
   const stats=await get_files(render_data)
-  const {re}=render_data
-  const sorted=sortArrayByField(stats,render_data.req)
-  const stats_data=sorted.map(stats=>{
+  const {req}=render_data 
+  const body:DataTable=stats.map(stats=>{
     const {error,filename,is_dir,size,changed,relative}=stats//Property size does not exist on type 
     return {
-      filename:function(){
-        return`<div class=filename>
+      filename:{
+        x:filename,
+        content:`<div class=filename>
             ${icon(is_dir,error)}
-              <a href=/files${encode_path(relative)}>${mark(re,encode(filename))}
+              <a class=mark href=/files${encode_path(relative)}>${encode(filename)}
             </div>`        
-      }(),
-      '':render_download(stats),
+      },
+      '':{
+        x:'',
+        content:render_download(stats),
+      },
       format:guessFileFormat(filename),
-      size    : formatBytes(size),
-      changed : nowrap(timeSince(changed))
+      size    : {x:size,content:formatBytes(size)},
+      changed : {x:changed,content:nowrap(timeSince(changed))}
     }
   })
-  const content=render_table2(render_data.req,stats_data)
+  const content=render_table3({req,body})
   res.end(render_page(content,render_data))
   return
 }
