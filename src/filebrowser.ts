@@ -144,7 +144,7 @@ async  function handler_commits(req:Request, res:Response){
   const table_data=commits.map(({branch,date,hash,message})=>(
     {
       hash:linked_hash2({parent_relative,hash}),
-      message:mark(re,encode(message)),
+      message,
       branch,
       'time ago':nowrap(date_to_timesince(date))
     }
@@ -155,7 +155,7 @@ async  function handler_commits(req:Request, res:Response){
 async  function handler_branches(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'branches'})  
   const {parent_relative,git}=render_data
-  const branches = Object.values((await git.branch()))
+  const branches = (await git.branch())
   const table_data=branches.map(({branch,hash,current,message,date})=>({
       branch,
       hash:linked_hash2({parent_relative,hash:hash}),
@@ -213,9 +213,10 @@ async function render_dir(render_data:RenderData,res:Response){
     const {error,filename,is_dir,size,changed,relative}=stats//Property size does not exist on type 
     return {
       filename:{
+        sort_x:is_dir+filename,
         x:filename,
         content:`<div class=filename>
-            ${icon(is_dir,error)}
+            ${icon(is_dir,undefined)}
               <a class=mark href=/files${encode_path(relative)}>${encode(filename)}
             </div>`        
       },

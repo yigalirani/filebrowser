@@ -38,7 +38,7 @@ export function render_filename(render_data:RenderData,stats:MyStats){
   }()  
   return`<div class=filename>
         <div class=icon>${icon}</div>
-        <a href=/files${encode_path(relative)}> ${mark(re,encode(filename))}
+        <a href=/files${encode_path(relative)}>${encode(filename)}
       </div>`
 }
 export function render_filename_git(render_data:RenderData,stats:LsTree){
@@ -49,7 +49,7 @@ export function render_filename_git(render_data:RenderData,stats:LsTree){
   }()  
   return`<div class=filename>
         <div class=icon>${icon}</div>
-        <a href=/files${encode_path(parent_relative)}> ${mark(re,encode(filename))}
+        <a href=/files${encode_path(parent_relative)}> ${encode(filename)}
       </div>`
 }
 export function render_download(stats:MyStats){
