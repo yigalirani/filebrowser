@@ -2,7 +2,7 @@
 import express, { Request, Response,NextFunction} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,encode_path} from './utils';
+import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,encode_path,sortArrayByField,filter_it} from './utils';
 import {RenderData,MyStats} from './types'
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
@@ -134,16 +134,7 @@ function nowrap(a:string|undefined){
   return `<div class=nowrap>${a}</div>`
 }
 
-function filter_it<T>(ar:T[],re:RegExp|null,...fields:(keyof T)[]){
-  if (re==null||ar.length===0)
-    return ar
-  const ans:T[]=[]
-  for (const x of ar)
-    for (const field of fields)
-      if (re.test(x[field]+''))
-        ans.push(x)
-  return ans
-}
+
 async  function handler_commits(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commits'})  
   const {parent_relative,re,git}=render_data 
@@ -157,7 +148,7 @@ async  function handler_commits(req:Request, res:Response){
       'time ago':nowrap(date_to_timesince(date))
     }
   ))
-  const content=render_table2(render_data,table_data)
+  const content=render_table2(render_data.req,table_data)
   res.end(render_page(content,render_data))
 }
 async  function handler_branches(req:Request, res:Response){
@@ -171,7 +162,7 @@ async  function handler_branches(req:Request, res:Response){
       current,
       'time ago':nowrap(date_to_timesince(date))
   }))
-  const content=render_table2(render_data,table_data)
+  const content=render_table2(render_data.req,table_data)
   res.end(render_page(content,render_data))
 }
 
@@ -201,31 +192,11 @@ async  function handler_commitdiff (req:Request, res:Response){
     return ans
 
   })*/
-  const content=render_table2(render_data,files)
+  const content=render_table2(render_data.req,files)
 //  const content=JSON.stringify(diffSummary,null,2)
   res.end(render_page(`<pre>${content}</pre>`,render_data))
 }
-function sortArrayByField<T>(array: T[], render_data:RenderData): T[] {
-  // If fieldName is null, return the array without sorting
-  const {sort,asc}=render_data.req.query
-  if (sort == null) {
-      return array;
-  }
-  const sort_fiels=sort+''as keyof T
-  return array.sort((a, b) => {
-      const fieldA = a[sort_fiels];
-      const fieldB = b[sort_fiels];
 
-      let comparison = 0;
-      if (fieldA==null||fieldA < fieldB) {
-          comparison = -1;
-      } else if (fieldB==null||fieldA > fieldB) {
-          comparison = 1;
-      }
-
-      return asc === 'false' ? comparison : -comparison;
-  });
-}
 function icon_div(content:string){
   return `<div class=icon>${content}</div>`
 }
@@ -237,7 +208,7 @@ function icon(is_dir:boolean,error:string|undefined){
 async function render_dir(render_data:RenderData,res:Response){
   const stats=await get_files(render_data)
   const {re}=render_data
-  const sorted=sortArrayByField(stats,render_data)
+  const sorted=sortArrayByField(stats,render_data.req)
   const stats_data=sorted.map(stats=>{
     const {error,filename,is_dir,size,changed,relative}=stats//Property size does not exist on type 
     return {
@@ -253,7 +224,7 @@ async function render_dir(render_data:RenderData,res:Response){
       changed : nowrap(timeSince(changed))
     }
   })
-  const content=render_table2(render_data,stats_data)
+  const content=render_table2(render_data.req,stats_data)
   res.end(render_page(content,render_data))
   return
 }
@@ -266,7 +237,7 @@ async function handler_ls(req:Request, res:Response){
     filename:'dfdf'
     
   }))
-  const content=render_table2(render_data,body)
+  const content=render_table2(render_data.req,body)
   res.end(render_page(content,render_data))
  }
 

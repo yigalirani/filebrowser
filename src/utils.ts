@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { Request} from 'express';
 import {RenderData,LegType} from './types'
 const {posix}=path
 export function timeSince(ago_time:number|undefined) {
@@ -147,11 +148,11 @@ function render_href(options:s2any){
   return '?'+ans.join('&')
 }
 export function render_table2(
-  render_data:RenderData,
+  req:Request,
   data:readonly s2s[],
   sortable=true
 ){
-  const {asc:old_asc,sort:old_sort,filter}=render_data.req.query
+  const {asc:old_asc,sort:old_sort,filter}=req.query
   const first=data[0]!
   function render_title(col:string){
     if (!sortable){
@@ -166,17 +167,86 @@ export function render_table2(
     }()
     return `<th>${icon}<a href='${href}'>${col}</th>`
   }  
+  const head=Object.keys(first).map(render_title).join('')
+    
   function render_row(row:s2s,i:number){
     const tds=Object.values(row).map(render_td).join('')
     return `<tr><td>${i+1}</td>${tds}</tr>`
   }
   if (data.length===0)
     return '<div class=info>(empty )</div>'
+
   const body=data.map(render_row).join('\n')
-  const head=Object.keys(first).map(render_title).join('')
+
   const ans=`<table>
   <tr><th></th>${head}</tr>
   ${body}
   </table>`
   return ans
+}
+export function sortArrayByField<T>(array:  T[], req:Request) {
+  // If fieldName is null, return the array without sorting
+  const {sort,asc}=req.query
+  if (sort == null) {
+      return array;
+  }
+  const sort_fiels=sort+''as keyof T
+  return array.sort((a, b) => {
+      const fieldA = a[sort_fiels];
+      const fieldB = b[sort_fiels];
+
+      let comparison = 0;
+      if (fieldA==null||fieldA < fieldB) {
+          comparison = -1;
+      } else if (fieldB==null||fieldA > fieldB) {
+          comparison = 1;
+      }
+
+      return asc === 'false' ? comparison : -comparison;
+  });
+}
+type RenderFunc=(a:s2s)=>string
+export function filter_it<T>(ar:T[],re:RegExp|null,...fields:(keyof T)[]){
+  if (re==null||ar.length===0)
+    return ar
+  const ans:T[]=[]
+  for (const x of ar)
+    for (const field of fields)
+      if (re.test(x[field]+''))
+        ans.push(x)
+  return ans
+}
+export function render_table3({
+  req,
+  data,
+  sortable=true,
+  render_func,
+  titles={}
+}:{
+  req:Request,
+  data:s2s[],
+  sortable:boolean,
+  render_func:RenderFunc,
+  titles:Record<string,string>,
+}){
+  const {asc:old_asc,sort:old_sort,filter}=req.query
+  const first=data[0]!
+  function render_title(col:string){
+    if (!sortable){
+      const title=titles[col]||col
+      return `<th>${title}</th>`
+    }
+    const asc=( old_sort===col)&&!JSON.parse(old_asc+'')
+    const href=render_href({asc,sort:col,filter})
+    const icon=function(){
+      if (col!==old_sort)
+        return ''
+      return asc?'▲':'▼'
+    }()
+    return `<th>${icon}<a href='${href}'>${col}</th>`
+  }  
+  const head=Object.keys(first).map(render_title).join('')
+  const re=filter&&new RegExp(`(${filter})`, 'i')||null  
+  sortArrayByField(data,req)
+
 }
