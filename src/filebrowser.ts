@@ -140,7 +140,7 @@ async  function handler_commits(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commits'})  
   const {parent_relative,re,git}=render_data 
 
-  const commits=filter_it(await git.log(),re,'hash','message')
+  const commits=await git.log()//,re,'hash','message')
   const table_data=commits.map(({branch,date,hash,message})=>(
     {
       hash:linked_hash2({parent_relative,hash}),
@@ -228,17 +228,17 @@ async function render_dir(render_data:RenderData,res:Response){
       changed : {x:changed,content:nowrap(timeSince(changed))}
     }
   })
-  const content=render_table3({req,body})
+  const content=render_table3({req,body,filterable:['filename']})
   res.end(render_page(content,render_data))
   return
 }
 async function handler_ls(req:Request, res:Response){
   const {gitpath,commit}=req.params
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'handler_ls',need_git:true})
-  const {git,re}=render_data
-  const ret=filter_it(await git.ls(commit!,gitpath!),re,'filename')
+  const {git}=render_data
+  const ret=await git.ls(commit!,gitpath!)
   const body=ret.map(x=>({
-    filename:'dfdf'
+    filename:x.filename
     
   }))
   const content=render_table2(render_data.req,body)

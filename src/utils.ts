@@ -234,14 +234,17 @@ export function sortArrayByField<T>(array:  DataTable, req:Request) {
 }
 
 
-export function filter_it<T>(ar:T[],re:RegExp|null,...fields:(keyof T)[]){
+export function filter_it(ar:DataTable,re:RegExp|null,...fields:string[]){
   if (re==null||ar.length===0)
     return ar
-  const ans:T[]=[]
-  for (const x of ar)
-    for (const field of fields)
-      if (re.test(x[field]+''))
-        ans.push(x)
+  const ans:DataTable=[]
+  for (const row of ar)
+    for (const field of fields){
+      const cell=row[field]
+      const x=calc_x(cell)
+      if (x==null || re.test(x+''))
+        ans.push(row)
+    }
   return ans
 }
 type FlexBool=boolean|string[]
@@ -295,11 +298,11 @@ export function render_table3({
     const tds=Object.values(row).map(render_td).join('')
     return `<tr><td>${i+1}</td>${tds}</tr>`
   }
-  const body2=body.map(render_row).join('\n')
+  const rendered=filtered.map(render_row).join('\n')
 
   const ans=`<table>
   <tr><th></th>${head}</tr>
-  ${body2}
+  ${rendered}
   </table>`
   return ans
 
