@@ -217,21 +217,19 @@ export function sortArrayByField<T>(array:  DataTable, req:Request) {
       return array;
   }
   const sort_fiels=sort+''as keyof T
+  const mult=asc === 'false' ? -1 : 1;
   return array.sort((a, b) => {
       const fieldA = calc_x(a[sort_fiels]);
       const fieldB = calc_x(b[sort_fiels]);
-      if (fieldA==null&&fieldB==null)
+      if (fieldA == fieldB)
         return 0
-      let comparison = 0;
       if (fieldA==null) 
-        return asc === 'false' ? 1 : -1;
-      if (fieldB==null) {
-        return asc === 'false' ? 1 : -1;        
-      } else if (fieldB==null||fieldA > fieldB) {
-          comparison = 1;
-      }
-
-      return asc === 'false' ? comparison : -comparison;
+        return mult
+      if (fieldB==null) 
+        return mult*-1     
+      if (fieldA > fieldB) 
+        return mult
+      return mult*-1
   });
 }
 
