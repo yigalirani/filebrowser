@@ -4,11 +4,10 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "watch_build": "nodemon --watch src build.mjs",
+    "watch_build": "nodemon --watch src --ext css,mjs,js build.mjs",
     "watch_tsc": "nodemon --watch src --exec tsc",
     "watch_eslint": "nodemon --watch src --exec eslint",
-    "watch_server": "nodemon --watch src --watch dist/filebrowser.js dist/filebrowser.js",
-    "run_simpler_git": "ts-node src/simpler_git.ts"
+    "watch_server": "nodemon --watch src --watch dist/filebrowser.js dist/filebrowser.js"
   },
   "author": "",
   "license": "ISC",

@@ -280,3 +280,6 @@ td {
   text-overflow: ellipsis; /* Add "..." for clipped text */
   background-color: #1f6feb;
 } 
+td.undef{
+  background-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIUlEQVQYV2O8du3aZi0tLV8GBgYGEJsRxgDRIAlMAXQtAAIUFm9j96x6AAAAAElFTkSuQmCC");
+}
