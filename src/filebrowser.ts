@@ -210,9 +210,9 @@ async function render_dir(render_data:RenderData,res:Response){
       '':{
         content:render_download(stats),
       },
-      format:guessFileFormat(filename),
-      size    : {x:size,content:formatBytes(size)},
-      changed : {x:changed,content:timeSince(changed)},
+      type:is_dir?'Folder':guessFileFormat(filename),
+      size    : size&&{x:size,content:formatBytes(size)},
+      changed : changed&&{x:changed,content:timeSince(changed)},
       err:error&&{ 
         icon:'&#x274C',
         x:error

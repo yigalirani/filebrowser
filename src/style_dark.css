@@ -281,5 +281,7 @@ td {
   background-color: #1f6feb;
 } 
 td.undef{
-  background-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIUlEQVQYV2O8du3aZi0tLV8GBgYGEJsRxgDRIAlMAXQtAAIUFm9j96x6AAAAAElFTkSuQmCC");
+  background-color: #212e40;
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIUlEQVQYV2O8du3aZi0tLV8GBgYGEJsRxgDRIAlMAXQtAAIUFm9j96x6AAAAAElFTkSuQmCC");
+  background-blend-mode: overlay; /* Blends the pattern with the background color */
 }

@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "watch_build": "nodemon --watch src --ext css,mjs,js build.mjs",
+    "watch_build": "nodemon --watch src --ext css,mjs,js,ts build.mjs",
     "watch_tsc": "nodemon --watch src --exec tsc",
     "watch_eslint": "nodemon --watch src --exec eslint",
     "watch_server": "nodemon --watch src --watch dist/filebrowser.js dist/filebrowser.js"
