@@ -136,7 +136,7 @@ async  function handler_commits(req:Request, res:Response){
   const body=commits.map(({branch,date,hash,message})=>(
     {
       hash:{
-        href:`/ls/${parent_relative}/${hash}/>`,
+        href:`/ls/${parent_relative}/${hash}/`,
         x:hash.slice(0,8)
       },
       message,
@@ -151,14 +151,14 @@ async  function handler_branches(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'branches'})  
   const {parent_relative,git}=render_data
   const branches = (await git.branch())
-  const table_data=branches.map(({branch,hash,current,message,date})=>({
+  const body=branches.map(({branch,hash,current,message,date})=>({
       branch,
-      hash:linked_hash2({parent_relative,hash:hash}),
+      hash:linked_hash2({parent_relative,hash}),
       message,
       current,
       'time ago':nowrap(date_to_timesince(date))
   }))
-  const content=render_table2(render_data.req,table_data)
+  const content=render_table3({body,req})
   res.end(render_page(content,render_data))
 }
 
@@ -225,14 +225,19 @@ async function render_dir(render_data:RenderData,res:Response){
 }
 async function handler_ls(req:Request, res:Response){
   const {gitpath,commit}=req.params
-  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'handler_ls',need_git:true})
-  const {git}=render_data
+  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
+  const {git,parent_relative}=render_data
   const ret=await git.ls(commit!,gitpath!)
-  const body=ret.map(x=>({
-    filename:x.filename
+  const body=ret.map(({size,is_dir,filename})=>({
+    filename:{
+      x:filename,
+      icon:icon(is_dir),
+      href:`/ls/${parent_relative}/${commit}/${gitpath}/${filename}`,
+    },
+    size    : size&&{x:size,content:formatBytes(size)}
     
   }))
-  const content=render_table2(render_data.req,body)
+  const content=render_table3({body,req})
   res.end(render_page(content,render_data))
  }
 

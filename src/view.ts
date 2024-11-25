@@ -92,7 +92,7 @@ function render_git_swithcer(render_data:RenderData){
     const class_decor=(cur_handler===handler)?'class=highlited':''
     return `<a ${class_decor} href='/${handler}/${parent_relative}'>${handler}</a>`
   }
-  const links=['files','branches','commits','commitdiff'].map(make_link).join('\n')
+  const links=['files','branches','commits','commitdiff','ls'].map(make_link).join('\n')
   return `<div class='info'>
   ${links}
   </div>`

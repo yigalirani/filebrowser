@@ -40,8 +40,19 @@ interface CommitInfo {
 function normalize_path(str: string): string {
   if (str==null||str==='')
     return ''
-  return str.endsWith('/') ? str : `${str}/`;
+
+    // Remove leading slash, if present
+    let formatted = str.startsWith('/') ? str.slice(1) : str;
+
+    // Add trailing slash, if not present
+    if (!formatted.endsWith('/')) {
+        formatted += '/';
+    }
+
+    return formatted;
 }
+
+
 function parse_int(x:string|undefined){
   const ans=parseInt(x+'')
   if (isNaN(ans))
