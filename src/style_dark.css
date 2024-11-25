@@ -274,3 +274,9 @@ table b{
 .nowrap{
   white-space: nowrap;
 }
+td {
+  white-space: nowrap;  /* Prevent text wrapping */
+  overflow: hidden;     /* Hide overflowing content */
+  text-overflow: ellipsis; /* Add "..." for clipped text */
+  background-color: #1f6feb;
+} 

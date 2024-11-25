@@ -136,9 +136,10 @@ export function isAtom(x: unknown): x is Atom {
   return ['number', 'string', 'boolean'].includes(typeof x)
 }
 type DataCell={
-  x:Atom, //for filtering only
-  content:string|undefined,
-  sort_x?:string
+  x?       : Atom, //for filtering amd sorting
+  content? : string,
+  href?    : string,
+  icon?    : string
 }|Atom
 
 
@@ -147,7 +148,15 @@ function calc_content(a:DataCell){
     return undefined
   if (isAtom(a))
     return a
-  return a.content
+  const {x,content,href,icon}=a
+  if (content!=null)
+    return content
+  let ans=''
+  if (href!=null){
+    ans=`<a href='${href}'>${x}</a>` 
+  }else
+    ans=x+''
+  return icon?`<div class=icon>${icon}</div>${ans}`:ans
 }
 function calc_x(a:DataCell){
   if (isAtom(a))
@@ -292,19 +301,11 @@ export function render_table3({
       return []
     return filterable
   }()
-  function render_td(row:[string,DataCell|undefined]){
-    const [col,a]=row
-    const content=calc_content(a)   
-    if (content==null)
-      return "<td class='undef'> </td>"
-    const className=filtered_fields.includes(col)?'filtered':''
-    return `<td ${className}>${content}</td>`
-  }  
   const filtered=filter_it(body,re,...filtered_fields)
   if (filtered.length===0)
     return '<div class=info>(empty )</div>'
   function render_row(row:DataRow,i:number){
-    const tds=Object.entries(row).map(render_td).join('')
+    const tds=Object.values(row).map(render_td).join('')
     return `<tr><td>${i+1}</td>${tds}</tr>`
   }
   const rendered=filtered.map(render_row).join('\n')

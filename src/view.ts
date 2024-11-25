@@ -54,8 +54,8 @@ export function render_filename_git(render_data:RenderData,stats:LsTree){
 }
 export function render_download(stats:MyStats){
   const {is_dir,relative,error}=stats
-  if (error!=null)
-    return `<div class=error_txt>${encode(error)}</div>`
+  //if (error!=null)
+  //  return `<div class=error_txt>${encode(error)}</div>`
   if (is_dir)
     return ''
   return `<a href="/static/${encode_path(relative)}" download>${DOWNLOAD_ICON}</a>`

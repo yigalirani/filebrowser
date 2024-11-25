@@ -2,7 +2,7 @@
 import express, { Request, Response,NextFunction} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,encode_path,DataTable,filter_it,render_table3} from './utils';
+import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,encode_path,DataTable,render_table3} from './utils';
 import {RenderData,MyStats} from './types'
 import {guessFileFormat} from './fileformat'
 import {password_protect} from './pass'
@@ -11,20 +11,17 @@ import {read_config} from './config'
 import http from 'http'
 import https from 'https'
 //import {simpleGit} from 'simple-git';
-import {SimplerGit,LsTree} from './simpler_git';
+import {SimplerGit} from './simpler_git';
 
-import * as varlog from 'varlog'
 
-import {encode} from 'html-entities'
+//import {encode} from 'html-entities'
 import {
   render_error_page, 
   render_image, 
   render_page, 
   //render_table,
   render_simple_error_page,
-  render_filename,
   render_download,
-  mark,
   FILE_ICON
 } from './view';
 import { marked } from 'marked'
@@ -57,12 +54,7 @@ const routes = {
   commitDiff: `/commitdiff:syspath(*)/:commit1${hex}/:commit2${hex}/`,
 };
 
-function filter(render_data:RenderData,v:string[]){
-  const {re}=render_data
-  if (re==null)
-    return v
-  return v.filter(x=>re.test(x))
-}
+
 //export type MyStats = Awaited<ReturnType<typeof mystats>>
 async function get_files(render_data:RenderData){
   const {parent_absolute,root_dir}=render_data
@@ -138,18 +130,21 @@ function nowrap(a:string|undefined){
 
 async  function handler_commits(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commits'})  
-  const {parent_relative,re,git}=render_data 
+  const {parent_relative,git}=render_data 
 
   const commits=await git.log()//,re,'hash','message')
-  const table_data=commits.map(({branch,date,hash,message})=>(
+  const body=commits.map(({branch,date,hash,message})=>(
     {
-      hash:linked_hash2({parent_relative,hash}),
+      hash:{
+        href:`/ls/${parent_relative}/${hash}/>`,
+        x:hash.slice(0,8)
+      },
       message,
       branch,
       'time ago':nowrap(date_to_timesince(date))
     }
   ))
-  const content=render_table2(render_data.req,table_data)
+  const content=render_table3({req,body})
   res.end(render_page(content,render_data))
 }
 async  function handler_branches(req:Request, res:Response){
@@ -198,35 +193,30 @@ async  function handler_commitdiff (req:Request, res:Response){
   res.end(render_page(`<pre>${content}</pre>`,render_data))
 }
 
-function icon_div(content:string){
-  return `<div class=icon>${content}</div>`
-}
-function icon(is_dir:boolean,error:string|undefined){
-  if (error!=null)
-    return icon_div('&#x274C;')
-  return icon_div(is_dir?'&#128193;': FILE_ICON)
+function icon(is_dir:boolean){
+  return is_dir?'&#128193;': FILE_ICON
 }
 async function render_dir(render_data:RenderData,res:Response){
   const stats=await get_files(render_data)
   const {req}=render_data 
   const body:DataTable=stats.map(stats=>{
-    const {error,filename,is_dir,size,changed,relative}=stats//Property size does not exist on type 
+    const {filename,error,is_dir,size,changed,relative}=stats//Property size does not exist on type 
     return {
       filename:{
-        sort_x:is_dir+filename,
         x:filename,
-        content:`<div class=filename>
-            ${icon(is_dir,undefined)}
-              <a class=mark href=/files${encode_path(relative)}>${encode(filename)}
-            </div>`        
+        icon:icon(is_dir),
+        href:`/files${encode_path(relative)}`
       },
       '':{
-        x:'',
         content:render_download(stats),
       },
       format:guessFileFormat(filename),
       size    : {x:size,content:formatBytes(size)},
-      changed : {x:changed,content:nowrap(timeSince(changed))}
+      changed : {x:changed,content:timeSince(changed)},
+      err:error&&{ 
+        icon:'&#x274C',
+        x:error
+      }
     }
   })
   const content=render_table3({req,body,filterable:['filename']})
