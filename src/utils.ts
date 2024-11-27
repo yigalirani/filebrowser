@@ -291,8 +291,8 @@ export function render_table3({
     }()
     return `<th>${icon}<a href='${href}'>${col}</th>`
   }  
-  const head=Object.keys(first).map(render_title).join('')
   const re=filter&&new RegExp(`(${filter})`, 'i')||null  
+
   sortArrayByField(body,req)
   const filtered_fields=function(){
     if (filterable===true)
@@ -304,6 +304,7 @@ export function render_table3({
   const filtered=filter_it(body,re,...filtered_fields)
   if (filtered.length===0)
     return '<div class=info>(empty )</div>'
+  const head=Object.keys(first).map(render_title).join('')  
   function render_row(row:DataRow,i:number){
     const tds=Object.values(row).map(render_td).join('')
     return `<tr><td>${i+1}</td>${tds}</tr>`

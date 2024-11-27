@@ -51,7 +51,16 @@ function normalize_path(str: string): string {
 
     return formatted;
 }
+function normalize_path2(str: string): string {
+  if (str==null||str==='')
+    return ''
 
+    // Remove leading slash, if present
+  const ans = str.startsWith('/') ? str.slice(1) : str;
+  if (ans.endsWith('/'))
+    return ans.slice(0,-1)
+  return ans
+}
 
 function parse_int(x:string|undefined){
   const ans=parseInt(x+'')
@@ -73,6 +82,8 @@ export class SimplerGit {
     }
 
     private async run(command: string): Promise<string> {
+      const {gitDir}=this
+      console.log({command,gitDir})
         process.chdir(this.gitDir);
         const { stdout } = await execAsync(command,{maxBuffer:100000000});
         return stdout.trim();
@@ -88,7 +99,7 @@ export class SimplerGit {
 
 
     async show(commitRef: string, fileName: string): Promise<string> {
-        return await this.run(`git show ${commitRef}:${fileName}`);
+        return await this.run(`git show ${commitRef}:${normalize_path2(fileName)}`);
     }
 
     /*async showWithError(commitRef: string, fileName: string): Promise<[string | null, string | null]> {

@@ -48,6 +48,7 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
 const hex = '([0-9a-fA-F]{5,40})';
 const routes = {
   ls: `/ls:syspath(*)/:commit${hex}/:gitpath(*)`,
+  show: `/show:syspath(*)/:commit${hex}/:gitpath(*)`,
   files: '/files:syspath(*)',
   commits: '/commits:syspath(*)',
   branches: '/branches:syspath(*)',
@@ -232,15 +233,20 @@ async function handler_ls(req:Request, res:Response){
     filename:{
       x:filename,
       icon:icon(is_dir),
-      href:`/ls/${parent_relative}/${commit}/${gitpath}/${filename}`,
+      href:`/${is_dir?'ls':'show'}/${parent_relative}/${commit}/${gitpath}/${filename}`,
     },
     size    : size&&{x:size,content:formatBytes(size)}
-    
   }))
   const content=render_table3({body,req})
   res.end(render_page(content,render_data))
  }
-
+ async function handler_show(req:Request, res:Response){
+  const {gitpath,commit}=req.params
+  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
+  const {git,parent_relative}=render_data
+  const content=await git.show(commit!, gitpath!)
+  res.end(render_page(content,render_data))
+ }
   //res.end(`<pre>${JSON.stringify(req,null,2)}</pre>`)
   /*return
   res.end(`<ol>
@@ -328,6 +334,8 @@ async function run_app() {
     app.use(password_protect(config.password))
     app.use('/static',express.static('/'))
     app.get(routes.ls,catcher(handler_ls))
+    app.get(routes.show,catcher(handler_show))
+    
     app.get(routes.files,catcher(handler_files))
     app.get(routes.commits,catcher(handler_commits))
     app.get(routes.branches,catcher(handler_branches))
