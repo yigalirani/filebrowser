@@ -69,7 +69,7 @@ export function to_posix(url:string){
 export function get_error(ex: Error): string {
   //if (!ex) return 'Unknown error';
   const message = ex.message || ex.toString();
-  return message.trim();
+  return message.split(',')[0]!.trim();
 }
 function get_legs(path:string){
   return ['',...path.split('/').filter(Boolean)]

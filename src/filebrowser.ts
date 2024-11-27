@@ -265,44 +265,36 @@ function redirect_to_files(req:Request, res:Response){
 
 async  function handler_files(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'files'})
-  const {parent_absolute,stats:{is_dir,error,filename}}=render_data
-  try{
-    if (error){
-      res.end(render_error_page(error,render_data))
-    }
-    if (is_dir){
-      return render_dir(render_data,res)
-    }
-    const format=guessFileFormat(filename)
-    if (format==='image'){
-      res.end(render_image(render_data))
-      return
-    }
-    if (format==='video'){
-      const content=`<br><video controls>
-      <source src="/static/${parent_absolute}" type="video/mp4">
-      Your browser does not support the video tag.
-    </video>`
-      res.end(render_page(content,render_data))
-      return
-    }
-    //const format= guessFileFormat(base)
-    const txt=await fs.readFile(parent_absolute, 'utf8') 
-    if (format==null){
-      res.end(render_page(`<div class=info>unrecogrnized format: rendering as text</div><pre>${txt}</pre>`,render_data))
-      return
-    }
-    if (format==='markdown'){
-      res.end(render_page(await marked.parse(txt),render_data))
-      return
-    }    
-    const {value,language}=await hljs.highlight(format,txt)
-    render_data.language=language
-    res.end(render_page(`<pre>${value}</pre>`,render_data))
-  }catch(ex){
-    const error=get_error(ex)
-    res.end(render_error_page(error,render_data))
+  const {parent_absolute,stats:{is_dir,filename}}=render_data
+  if (is_dir){
+    return render_dir(render_data,res)
   }
+  const format=guessFileFormat(filename)
+  if (format==='image'){
+    res.end(render_image(render_data))
+    return
+  }
+  if (format==='video'){
+    const content=`<br><video controls>
+    <source src="/static/${parent_absolute}" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>`
+    res.end(render_page(content,render_data))
+    return
+  }
+  //const format= guessFileFormat(base)
+  const txt=await fs.readFile(parent_absolute, 'utf8') 
+  if (format==null){
+    res.end(render_page(`<div class=info>unrecogrnized format: rendering as text</div><pre>${txt}</pre>`,render_data))
+    return
+  }
+  if (format==='markdown'){
+    res.end(render_page(await marked.parse(txt),render_data))
+    return
+  }    
+  const {value,language}=await hljs.highlight(format,txt)
+  render_data.language=language
+  res.end(render_page(`<pre>${value}</pre>`,render_data))
 }
 type ExpressHandler=(req: Request, res: Response, next?: NextFunction)=>Promise<void> 
 export function catcher(fn:ExpressHandler){
