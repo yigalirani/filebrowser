@@ -49,6 +49,7 @@ const hex = '([0-9a-fA-F]{5,40})';
 const routes = {
   ls: `/ls:syspath(*)/:commit${hex}/:gitpath(*)`,
   show: `/show:syspath(*)/:commit${hex}/:gitpath(*)`,
+  showraw: `/showraw:syspath(*)/:commit${hex}/:gitpath(*)`,
   files: '/files:syspath(*)',
   commits: '/commits:syspath(*)',
   branches: '/branches:syspath(*)',
@@ -87,7 +88,7 @@ async function render_data_redirect_if_needed({req,res,cur_handler,need_git=fals
   const stats=await mystats({parent_absolute,base:'',root_dir})
   const {filter}=req.query
   const re=filter&&new RegExp(`(${filter})`, 'i')||null
-  const git=new SimplerGit(parent_absolute)
+  const git=new SimplerGit({parent_absolute})
   const is_git=await git.is_git()
   const ans:RenderData={
     parent_relative,
@@ -166,7 +167,7 @@ async  function handler_branches(req:Request, res:Response){
 async  function handler_commitdiff (req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commitdiff'})
   const {parent_absolute}=render_data
-  const git = new SimplerGit(parent_absolute);
+  const git = new SimplerGit({parent_absolute});
   const commit=req.params.commit
   if (commit==null){
     res.redirect('/')
@@ -243,9 +244,16 @@ async function handler_ls(req:Request, res:Response){
  async function handler_show(req:Request, res:Response){
   const {gitpath,commit}=req.params
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
-  const {git,parent_relative}=render_data
+  const {git}=render_data
   const content=await git.show(commit!, gitpath!)
-  res.end(render_page(content,render_data))
+  res.end(render_page(`<pre>${content}</pre>`,render_data))
+ }
+ async function handler_showraw(req:Request, res:Response){
+  const {gitpath,commit}=req.params
+  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
+  const {git}=render_data
+  const content=await git.show(commit!, gitpath!)
+  res.end(render_page(`<pre>${content}</pre>`,render_data))
  }
   //res.end(`<pre>${JSON.stringify(req,null,2)}</pre>`)
   /*return
@@ -327,6 +335,7 @@ async function run_app() {
     app.use('/static',express.static('/'))
     app.get(routes.ls,catcher(handler_ls))
     app.get(routes.show,catcher(handler_show))
+    app.get(routes.showraw,catcher(handler_showraw))
     
     app.get(routes.files,catcher(handler_files))
     app.get(routes.commits,catcher(handler_commits))

@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { exec,spawn  } from 'child_process';
 import { promisify } from 'util';
 import path from 'node:path';
 const {posix}=path
@@ -75,16 +75,16 @@ function str(x:string|undefined){
 }
 
 export class SimplerGit {
-    private gitDir: string;
+    private parent_absolute: string;
 
-    constructor(gitDir: string) {
-        this.gitDir = gitDir;
+    constructor({parent_absolute}:{parent_absolute:string}) {
+        this.parent_absolute = parent_absolute;
     }
 
     private async run(command: string): Promise<string> {
-      const {gitDir}=this
-      console.log({command,gitDir})
-        process.chdir(this.gitDir);
+      const {parent_absolute}=this
+      console.log({command,parent_absolute})
+        process.chdir(this.parent_absolute);
         const { stdout } = await execAsync(command,{maxBuffer:100000000});
         return stdout.trim();
     }
@@ -265,7 +265,7 @@ export class SimplerGit {
     }*/
 }
 async function _testit(){
-  const git=new SimplerGit('/yigal/million_try3')
+  const git=new SimplerGit({parent_absolute:'/yigal/million_try3'})
   console.log(await git.log())
 }
 //testit()
