@@ -1,3 +1,4 @@
+import {extname} from 'path';
 const specialFiles:Record<string,string> = {
   '.bashrc': 'bash',
   '.bash_profile': 'bash',
@@ -229,3 +230,122 @@ export function guessFileFormat(fileName:string) {
     return 'video'  
   return extensionToFormat[extension]
 }
+const mimeTypes: Record<string, string> = {
+    // Images
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.tiff': 'image/tiff',
+    '.tif': 'image/tiff',
+    '.svg': 'image/svg+xml',
+    '.ico': 'image/x-icon',
+    '.bmp': 'image/bmp',
+    '.avif': 'image/avif',
+    
+    // Audio
+    '.mp3': 'audio/mpeg',
+    '.wav': 'audio/wav',
+    '.ogg': 'audio/ogg',
+    '.m4a': 'audio/mp4',
+    '.aac': 'audio/aac',
+    '.weba': 'audio/webm',
+    '.mid': 'audio/midi',
+    '.midi': 'audio/midi',
+    
+    // Video
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm',
+    '.avi': 'video/x-msvideo',
+    '.mpeg': 'video/mpeg',
+    '.mov': 'video/quicktime',
+    '.wmv': 'video/x-ms-wmv',
+    '.flv': 'video/x-flv',
+    '.mkv': 'video/x-matroska',
+    
+    // Documents
+    '.pdf': 'application/pdf',
+    '.doc': 'application/msword',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.xls': 'application/vnd.ms-excel',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.ppt': 'application/vnd.ms-powerpoint',
+    '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    '.odt': 'application/vnd.oasis.opendocument.text',
+    '.ods': 'application/vnd.oasis.opendocument.spreadsheet',
+    '.odp': 'application/vnd.oasis.opendocument.presentation',
+    
+    // Web
+    '.html': 'text/html',
+    '.htm': 'text/html',
+    '.css': 'text/css',
+    '.js': 'text/javascript',
+    '.json': 'application/json',
+    '.xml': 'application/xml',
+    '.txt': 'text/plain',
+    '.csv': 'text/csv',
+    '.md': 'text/markdown',
+    
+    // Archives
+    '.zip': 'application/zip',
+    '.rar': 'application/x-rar-compressed',
+    '.7z': 'application/x-7z-compressed',
+    '.tar': 'application/x-tar',
+    '.gz': 'application/gzip',
+    
+    // Fonts
+    '.ttf': 'font/ttf',
+    '.otf': 'font/otf',
+    '.woff': 'font/woff',
+    '.woff2': 'font/woff2',
+    '.eot': 'application/vnd.ms-fontobject',
+    
+    // Other
+    '.swf': 'application/x-shockwave-flash',
+    '.exe': 'application/x-msdownload',
+    '.dll': 'application/x-msdownload',
+    '.bin': 'application/octet-stream',
+    '.iso': 'application/x-iso9660-image',
+    '.apk': 'application/vnd.android.package-archive',
+    '.rtf': 'application/rtf',
+    
+    // Email
+    '.eml': 'message/rfc822',
+    
+    // 3D Models
+    '.obj': 'model/obj',
+    '.stl': 'model/stl',
+    '.gltf': 'model/gltf+json',
+    '.glb': 'model/gltf-binary',
+    
+    // Calendar
+    '.ics': 'text/calendar',
+    
+    // Scientific/Technical
+    '.tex': 'application/x-tex',
+    '.latex': 'application/x-latex',
+    '.mathml': 'application/mathml+xml',
+    
+    // Database
+    '.db': 'application/x-sqlite3',
+    '.sql': 'application/sql',
+    
+    // Configuration
+    '.ini': 'text/plain',
+    '.cfg': 'text/plain',
+    '.conf': 'text/plain',
+    '.yml': 'text/yaml',
+    '.yaml': 'text/yaml',
+    '.toml': 'application/toml',
+    
+    // Vector Graphics
+    '.ai': 'application/postscript',
+    '.eps': 'application/postscript',
+    '.ps': 'application/postscript'
+  };
+export function guessMimeType(fileName:string) {
+  const ext = extname(fileName).toLowerCase();
+  return mimeTypes[ext] || 'application/octet-stream';
+}
+

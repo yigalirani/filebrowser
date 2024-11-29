@@ -1,4 +1,4 @@
-import { exec,spawn  } from 'child_process';
+import { exec,spawn  } from 'node:child_process';
 import { promisify } from 'util';
 import path from 'node:path';
 const {posix}=path
@@ -78,6 +78,7 @@ export class SimplerGit {
     private parent_absolute: string;
 
     constructor({parent_absolute}:{parent_absolute:string}) {
+
         this.parent_absolute = parent_absolute;
     }
 
@@ -88,6 +89,14 @@ export class SimplerGit {
         const { stdout } = await execAsync(command,{maxBuffer:100000000});
         return stdout.trim();
     }
+    private run_spawn(command: string) {
+      const {parent_absolute}=this
+      const subcommands=command.split(' ').filter(Boolean)
+      if (subcommands.length==0)
+        throw new Error('empty command')
+      const ans=spawn(subcommands[0]!,subcommands.slice(1),{cwd:parent_absolute})
+      return ans
+    }    
     async is_git(){
       try{
         await this.run('git status')
@@ -101,6 +110,11 @@ export class SimplerGit {
     async show(commitRef: string, fileName: string): Promise<string> {
         return await this.run(`git show ${commitRef}:${normalize_path2(fileName)}`);
     }
+    show_stream(commitRef: string, fileName: string){
+      return this.run_spawn(`git show ${commitRef}:${normalize_path2(fileName)}`);
+    }
+
+
 
     /*async showWithError(commitRef: string, fileName: string): Promise<[string | null, string | null]> {
         try {

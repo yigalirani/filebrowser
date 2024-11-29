@@ -4,7 +4,7 @@ import session from 'express-session';
 import { promises as fs } from 'fs';
 import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,encode_path,DataTable,render_table3} from './utils';
 import {RenderData,MyStats} from './types'
-import {guessFileFormat} from './fileformat'
+import {guessFileFormat,guessMimeType} from './fileformat'
 import {password_protect} from './pass'
 import hljs from 'highlight.js'
 import {read_config} from './config'
@@ -16,7 +16,7 @@ import {SimplerGit} from './simpler_git';
 
 //import {encode} from 'html-entities'
 import {
-  render_error_page, 
+   render_error_page, 
   render_image, 
   render_page, 
   //render_table,
@@ -49,7 +49,7 @@ const hex = '([0-9a-fA-F]{5,40})';
 const routes = {
   ls: `/ls:syspath(*)/:commit${hex}/:gitpath(*)`,
   show: `/show:syspath(*)/:commit${hex}/:gitpath(*)`,
-  showraw: `/showraw:syspath(*)/:commit${hex}/:gitpath(*)`,
+  rawshow: `/rawshow:syspath(*)/:commit${hex}/:gitpath(*)`,
   files: '/files:syspath(*)',
   commits: '/commits:syspath(*)',
   branches: '/branches:syspath(*)',
@@ -248,12 +248,14 @@ async function handler_ls(req:Request, res:Response){
   const content=await git.show(commit!, gitpath!)
   res.end(render_page(`<pre>${content}</pre>`,render_data))
  }
- async function handler_showraw(req:Request, res:Response){
+ async function handler_rawshow(req:Request, res:Response){
   const {gitpath,commit}=req.params
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
   const {git}=render_data
-  const content=await git.show(commit!, gitpath!)
-  res.end(render_page(`<pre>${content}</pre>`,render_data))
+  const ans=git.show_stream(commit!, gitpath!)
+  const mimetype=guessMimeType(gitpath!)
+  res.setHeader('Content-Type',mimetype );
+  ans.stdout.pipe(res)
  }
   //res.end(`<pre>${JSON.stringify(req,null,2)}</pre>`)
   /*return
@@ -335,7 +337,7 @@ async function run_app() {
     app.use('/static',express.static('/'))
     app.get(routes.ls,catcher(handler_ls))
     app.get(routes.show,catcher(handler_show))
-    app.get(routes.showraw,catcher(handler_showraw))
+    app.get(routes.rawshow,catcher(handler_rawshow))
     
     app.get(routes.files,catcher(handler_files))
     app.get(routes.commits,catcher(handler_commits))
