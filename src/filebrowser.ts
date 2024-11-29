@@ -244,7 +244,12 @@ async function handler_ls(req:Request, res:Response){
  async function handler_show(req:Request, res:Response){
   const {gitpath,commit}=req.params
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
-  const {git}=render_data
+  const {git,parent_relative,parent_absolute,stats:{filename}}=render_data
+  const format=guessFileFormat(gitpath!)
+  if (format==='image'){
+    res.end(render_page(`<br><img src='/rawshow/${parent_relative}/${commit}/${gitpath}'>`,render_data))
+    return
+  }
   const content=await git.show(commit!, gitpath!)
   res.end(render_page(`<pre>${content}</pre>`,render_data))
  }
