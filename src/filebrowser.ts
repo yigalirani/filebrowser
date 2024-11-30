@@ -277,6 +277,33 @@ async function readfile(fileName: string) {
       return {txt:'binary file',binary:true,buf}
   }
 }
+function bufferToHex(buffer: Buffer): string {
+  const bytesPerLine = 16;
+  let hexString = '';
+
+  for (let i = 0; i < buffer.length; i += bytesPerLine) {
+      // Add offset
+      const offset = i.toString(16).padStart(8, '0');
+
+      // Extract the current line of bytes
+      const lineBytes = buffer.slice(i, i + bytesPerLine);
+
+      // Convert bytes to hex
+      const hexBytes = Array.from(lineBytes)
+          .map(byte => byte.toString(16).padStart(2, '0'))
+          .join(' ');
+
+      // Convert bytes to ASCII, replacing non-printable characters with "."
+      const asciiRepresentation = Array.from(lineBytes)
+          .map(byte => (byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : '.'))
+          .join('');
+
+      // Format the line
+      hexString += `${offset}  ${hexBytes.padEnd(bytesPerLine * 3 - 1)}  |${asciiRepresentation}|\n`;
+  }
+
+  return hexString;
+}
 async  function handler_files(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'files'})
   const {parent_absolute,stats:{is_dir,filename}}=render_data
@@ -298,7 +325,7 @@ async  function handler_files(req:Request, res:Response){
   }
   const {txt,buf,binary}=await readfile(parent_absolute)
   if (binary){
-    const hex=buf.toString('hex');
+    const hex=bufferToHex(buf);
     res.end(render_page(`<div class=info>file is binary</div><pre>${hex}</pre>`,render_data))    
     return
   }
