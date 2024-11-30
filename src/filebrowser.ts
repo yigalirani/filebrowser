@@ -16,8 +16,7 @@ import {SimplerGit} from './simpler_git';
 
 //import {encode} from 'html-entities'
 import {
-   render_error_page, 
-  render_image, 
+   render_image, 
   render_page, 
   //render_table,
   render_simple_error_page,
@@ -244,7 +243,7 @@ async function handler_ls(req:Request, res:Response){
  async function handler_show(req:Request, res:Response){
   const {gitpath,commit}=req.params
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
-  const {git,parent_relative,parent_absolute,stats:{filename}}=render_data
+  const {git,parent_relative}=render_data
   const format=guessFileFormat(gitpath!)
   if (format==='image'){
     res.end(render_page(`<br><img src='/rawshow/${parent_relative}/${commit}/${gitpath}'>`,render_data))
@@ -262,22 +261,22 @@ async function handler_ls(req:Request, res:Response){
   res.setHeader('Content-Type',mimetype );
   ans.stdout.pipe(res)
  }
-  //res.end(`<pre>${JSON.stringify(req,null,2)}</pre>`)
-  /*return
-  res.end(`<ol>
-    <li> ${req.params.gitpath}
-    <li>${req.params.commit}
-    <li>${req.params[0]}
-    <li>${req.params[1]}
-    <li>${req.params[2]}
-  </ol>`)*/
 
 function redirect_to_files(req:Request, res:Response){
   const url=req.params[0]||'/'
   res.redirect(`/files${url}`)
 
 }
-
+const text_decoder = new TextDecoder('utf-8', { fatal: true });
+async function readfile(fileName: string) {
+    const buf = await fs.readFile(fileName);
+    try {
+      const txt=text_decoder.decode(buf); // Will throw if invalid UTF-8
+      return {txt,binary:false,buf}
+  } catch (e) {
+      return {txt:'binary file',binary:true,buf}
+  }
+}
 async  function handler_files(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'files'})
   const {parent_absolute,stats:{is_dir,filename}}=render_data
@@ -297,8 +296,14 @@ async  function handler_files(req:Request, res:Response){
     res.end(render_page(content,render_data))
     return
   }
-  //const format= guessFileFormat(base)
-  const txt=await fs.readFile(parent_absolute, 'utf8') 
+  const {txt,buf,binary}=await readfile(parent_absolute)
+  if (binary){
+    const hex=buf.toString('hex');
+    res.end(render_page(`<div class=info>file is binary</div><pre>${hex}</pre>`,render_data))    
+    return
+  }
+  //const txt=buf.toString('utf8')
+
   if (format==null){
     res.end(render_page(`<div class=info>unrecogrnized format: rendering as text</div><pre>${txt}</pre>`,render_data))
     return

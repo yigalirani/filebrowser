@@ -3,7 +3,7 @@ import {encode_path,render_fields} from './utils'
 import {LegType,MyStats,RenderData} from './types'
 import {encode} from 'html-entities'
 import style from './style.css'
-import {LsTree} from './simpler_git'
+
 import style_dark from './style_dark.css'
 import styleh from 'highlight.js/styles/github.css';
 //import styleh_dark from 'highlight.js/styles/github-dark.css';
@@ -28,7 +28,7 @@ export function mark(re:RegExp|null,text:string){
   if (re==null) return text; 
   return text.replace(re, '<b>$1</b>');
 }
-export function render_filename(render_data:RenderData,stats:MyStats){
+/*export function render_filename(render_data:RenderData,stats:MyStats){
   const {re}=render_data
   const {filename,error,relative,is_dir}=stats
   const icon=function(){
@@ -40,8 +40,8 @@ export function render_filename(render_data:RenderData,stats:MyStats){
         <div class=icon>${icon}</div>
         <a href=/files${encode_path(relative)}>${encode(filename)}
       </div>`
-}
-export function render_filename_git(render_data:RenderData,stats:LsTree){
+}*/
+/*export function render_filename_git(render_data:RenderData,stats:LsTree){
   const {re,parent_relative}=render_data
   const {filename,is_dir}=stats
   const icon=function(){
@@ -51,9 +51,9 @@ export function render_filename_git(render_data:RenderData,stats:LsTree){
         <div class=icon>${icon}</div>
         <a href=/files${encode_path(parent_relative)}> ${encode(filename)}
       </div>`
-}
+}*/
 export function render_download(stats:MyStats){
-  const {is_dir,relative,error}=stats
+  const {is_dir,relative}=stats
   //if (error!=null)
   //  return `<div class=error_txt>${encode(error)}</div>`
   if (is_dir)
@@ -114,18 +114,19 @@ function get_query_form(req:Request){
     </script>
 `
 }
+const HOME_ICONE=`<link rel="icon" type="image/png" sizes="16x16" href="data:image/png;base64,
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAMFBMVEU0OkArMjhobHEoPUPFEBIu
+O0L+AAC2FBZ2JyuNICOfGx7xAwTjCAlCNTvVDA1aLzQ3COjMAAAAVUlEQVQI12NgwAaCDSA0888G
+CItjn0szWGBJTVoGSCjWs8TleQCQYV95evdxkFT8Kpe0PLDi5WfKd4LUsN5zS1sKFolt8bwAZrCa
+GqNYJAgFDEpQAAAzmxafI4vZWwAAAABJRU5ErkJggg==" />`
 
 export function render_page(center:string,render_data:RenderData){
   const {fields,is_dark,req}=render_data
   const effective_style=is_dark?style_dark:style+styleh
   const content=`
 <html>
-<link rel="icon" type="image/png" sizes="16x16" href="data:image/png;base64,
-iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAMFBMVEU0OkArMjhobHEoPUPFEBIu
-O0L+AAC2FBZ2JyuNICOfGx7xAwTjCAlCNTvVDA1aLzQ3COjMAAAAVUlEQVQI12NgwAaCDSA0888G
-CItjn0szWGBJTVoGSCjWs8TleQCQYV95evdxkFT8Kpe0PLDi5WfKd4LUsN5zS1sKFolt8bwAZrCa
-GqNYJAgFDEpQAAAzmxafI4vZWwAAAABJRU5ErkJggg==" />
   <style>${effective_style}</style>
+  ${HOME_ICONE}
   ${render_breadcrumbs(render_data)} 
   ${render_fields(render_data,'commit','commit2')} 
   ${render_git_swithcer(render_data)}
