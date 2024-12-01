@@ -76,7 +76,7 @@ function str(x:string|undefined){
 
 export class SimplerGit {
     private parent_absolute: string;
-
+    public last_command='';
     constructor({parent_absolute}:{parent_absolute:string}) {
 
         this.parent_absolute = parent_absolute;
@@ -190,6 +190,7 @@ export class SimplerGit {
     },f:(a:string[])=>T){
       const ans:T[]=[]
       //try{
+        this.last_command=command
         const ret=await this.run(command)
         const rows=ret.split(record_sep).filter(Boolean)
         for (const row of rows){

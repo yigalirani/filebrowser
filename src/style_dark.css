@@ -273,7 +273,7 @@ table b{
 }
 .nowrap{
   white-space: nowrap;
-}
+} 
 td {
   white-space: nowrap;  /* Prevent text wrapping */
   overflow: hidden;     /* Hide overflowing content */
@@ -284,4 +284,10 @@ td.undef{
   background-color: #212e40;
   background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIUlEQVQYV2O8du3aZi0tLV8GBgYGEJsRxgDRIAlMAXQtAAIUFm9j96x6AAAAAElFTkSuQmCC");
   background-blend-mode: overlay; /* Blends the pattern with the background color */
+}
+.gitcommand{
+  background-color: black;
+  color: lightgreen;
+  padding: 5px;
+  margin:5px
 }

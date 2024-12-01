@@ -85,7 +85,7 @@ function render_breadcrumbs(render_data:RenderData){
   return ans.join('')
 }
 function render_git_swithcer(render_data:RenderData){
-  const{is_git,parent_relative,cur_handler}=render_data
+  const{is_git,parent_relative,cur_handler,git}=render_data
   if (!is_git)
     return ''
   function make_link(handler:string){
@@ -95,6 +95,7 @@ function render_git_swithcer(render_data:RenderData){
   const links=['files','branches','commits','commitdiff','ls'].map(make_link).join('\n')
   return `<div class='info'>
   ${links}
+  <div class=gitcommand> ${git.last_command}</div>
   </div>`
 }
 function get_query_form(req:Request){
