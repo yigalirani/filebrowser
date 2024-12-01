@@ -114,12 +114,12 @@ async function render_data_redirect_if_needed({req,res,cur_handler,need_git=fals
   }
   return ans
 }
-function linked_hash2({parent_relative,hash}:{
+function linked_hash2({parent_relative,commit}:{
   parent_relative:string
-  hash:string
+  commit:string
 }){
-    const trimmed=hash.slice(0,8)
-    return `<a class=linkedhash href=/ls/${parent_relative}/${hash}/>${trimmed}</a>`
+    const trimmed=commit.slice(0,9)
+    return `<a class=linkedhash href=/ls/${parent_relative}/${commit}/>${trimmed}</a>`
     //return `<a class=linkedhash href=/commitdiff/${trimmed}/${parent_relative}>${trimmed}</a>`
 }
 function nowrap(a:string|undefined){
@@ -132,14 +132,21 @@ function nowrap(a:string|undefined){
 async  function handler_commits(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commits'})  
   const {parent_relative,git}=render_data 
-
+  function hash_link(x:string|undefined){
+    if (x==null)
+      return undefined  
+    return {
+      href:`/ls/${parent_relative}/${x}/`,
+      x:x.slice(0,9)
+    }
+  }
   const commits=await git.log()//,re,'hash','message')
-  const body=commits.map(({branch,date,hash,message})=>(
+  const body=commits.map(({branch,author,date,commit,mergeparent,message,parent})=>(
     {
-      hash:{
-        href:`/ls/${parent_relative}/${hash}/`,
-        x:hash.slice(0,8)
-      },
+      commit:hash_link(commit),
+      merge:hash_link(mergeparent),
+      //parent,
+      author,
       message,
       branch,
       'time ago':nowrap(date_to_timesince(date))
@@ -152,9 +159,9 @@ async  function handler_branches(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'branches'})  
   const {parent_relative,git}=render_data
   const branches = (await git.branch())
-  const body=branches.map(({branch,hash,current,message,date})=>({
+  const body=branches.map(({branch,commit,current,message,date})=>({
       branch,
-      hash:linked_hash2({parent_relative,hash}),
+      hash:linked_hash2({parent_relative,commit}),
       message,
       current,
       'time ago':nowrap(date_to_timesince(date))

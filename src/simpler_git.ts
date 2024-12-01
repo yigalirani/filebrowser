@@ -29,7 +29,8 @@ interface CommitDiff extends Record<string,number|string>{
 }
 
 interface CommitInfo {
-  hash: string;
+  commit: string;
+  mergeparent?:string,
   branch:string,
   author: string;
   date: string;
@@ -86,7 +87,7 @@ export class SimplerGit {
       const {parent_absolute}=this
       console.log({command,parent_absolute})
         process.chdir(this.parent_absolute);
-        const { stdout } = await execAsync(command,{maxBuffer:100000000});
+        const { stdout } = await execAsync(command,{maxBuffer:1000000000});
         return stdout.trim();
     }
     private run_spawn(command: string) {
@@ -226,7 +227,8 @@ export class SimplerGit {
           const hashes=str(row[0]).split(' ')
           const parent=hashes.slice(1).join(',')
           return{
-            hash:str(hashes[0]),
+            commit:str(hashes[0]),
+            mergeparent:hashes[2],
             author:str(row[1]),
             date:str(row[2]),
             parent,
@@ -242,7 +244,7 @@ export class SimplerGit {
         field_sep:/,/},
         row=>{
          return {
-            hash:row[0]!,
+          commit:row[0]!,
             author:row[1]!,
             date:row[2]!,
             parent:row[3]!,

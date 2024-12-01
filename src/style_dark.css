@@ -291,3 +291,7 @@ td.undef{
   padding: 5px;
   margin:5px
 }
+td a{
+  font-family: 'Courier New', Courier, monospace;
+
+}
