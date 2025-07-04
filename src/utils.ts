@@ -152,7 +152,7 @@ type DataCell={
 }|Atom
 
 
-function calc_content(a:DataCell){
+function calc_content(a:DataCell|undefined){
   if (a==null)
     return undefined
   if (isAtom(a))
@@ -167,8 +167,8 @@ function calc_content(a:DataCell){
     ans=x+''
   return icon?`<div class=icon>${icon}</div>${ans}`:ans
 }
-function calc_x(a:DataCell){
-  if (isAtom(a))
+function calc_x(a:DataCell|undefined){
+  if (isAtom(a)||a==undefined)
     return a
   return a.x
 }
@@ -226,16 +226,16 @@ export function render_table2(
   </table>`
   return ans
 }
-type DataRow=Record<string,DataCell>
+export type DataRow=Record<string,DataCell|undefined>
 export type DataTable=DataRow[]
 
-export function sortArrayByField<T>(array:  DataTable, req:Request) {
+export function sortArrayByField(array:  DataTable, req:Request) {
   // If fieldName is null, return the array without sorting
   const {sort,asc}=req.query
   if (sort == null) {
       return array;
   }
-  const sort_fiels=sort+''as keyof T
+  const sort_fiels=sort+''
   const mult=asc === 'false' ? -1 : 1;
   return array.sort((a, b) => {
       const fieldA = calc_x(a[sort_fiels]);
