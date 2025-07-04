@@ -106,8 +106,17 @@ export function parse_path_root(render_data:RenderData){
   }
   return ans
 }
-type Atom=string|boolean|number|undefined|string[]
+type Atom=string|boolean|number|string[]
 
+
+export function nl<T>(value: T | null | undefined): T {
+  //todo:check only active on debug mode
+  //return value
+  if (value === null || value === undefined) {
+    throw new Error('Value cannot be null or undefined')
+  }
+  return value
+}
 export type s2s=Record<string,Atom>
 export type s2any=Record<string,unknown>
 export function pk<T,K extends keyof T>(obj:T,...keys:K[]):Pick<T,K> {
