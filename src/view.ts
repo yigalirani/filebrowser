@@ -1,4 +1,5 @@
-import { Request} from 'express';
+import { Request,Express,RequestHandler} from 'express';
+
 import {encode_path,render_fields} from './utils'
 import {LegType,MyStats,RenderData} from './types'
 import {encode} from 'html-entities'
@@ -160,4 +161,27 @@ export function render_simple_error_page(message:string,error:Error){
     <ul>${stack}</ul>
   </html>`  
 
+}
+interface Route<T extends Record<string, string> >{
+  path:string
+  gen:(a:T)=>string
+  handler:RequestHandler
+}
+export type Routes=Record<string,Route<any>>
+export function catcher(fn:RequestHandler){
+  const ans:RequestHandler= async function (req, res, next) {
+    try {
+      await fn(req, res, next)
+    } catch (error) {
+        res.end(render_simple_error_page('ouch, an internal rerror',error as Error))
+        //res.status(500).send(); // Handle error in case next is not provided
+    }
+  };
+  return ans
+}
+export function add_routes(a:Routes,app:Express){
+  for (const {path,handler} of Object.values(a)){
+    app.get(path,catcher(handler))
+  }
+  console.log(a)
 }

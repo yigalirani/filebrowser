@@ -1,5 +1,5 @@
 
-import express, { Request, Response,NextFunction, Router} from 'express';
+import express, { Request, Response} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
 import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,encode_path,DataTable,render_table3} from './utils';
@@ -12,7 +12,6 @@ import http from 'http'
 import https from 'https'
 //import {simpleGit} from 'simple-git';
 import {SimplerGit} from './simpler_git';
-import {add_routes} from './router'
 
 
 //import {encode} from 'html-entities'
@@ -20,9 +19,9 @@ import {
    render_image, 
   render_page, 
   //render_table,
-  render_simple_error_page,
   render_download,
-  FILE_ICON
+  FILE_ICON,
+  add_routes
 } from './view';
 import { marked } from 'marked'
 import path from 'node:path';
@@ -46,15 +45,6 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
   } 
 }
 const hex = '([0-9a-fA-F]{5,40})';
-const routes = {
-  ls: `/ls:syspath(*)/:commit${hex}/:gitpath(*)`,
-  show: `/show:syspath(*)/:commit${hex}/:gitpath(*)`,
-  rawshow: `/rawshow:syspath(*)/:commit${hex}/:gitpath(*)`,
-  files: '/files:syspath(*)',
-  commits: '/commits:syspath(*)',
-  branches: '/branches:syspath(*)',
-  commitDiff: `/commitdiff:syspath(*)/:commit1${hex}/:commit2${hex}/`,
-};
 
 
 //export type MyStats = Awaited<ReturnType<typeof mystats>>
@@ -129,88 +119,6 @@ function nowrap(a:string|undefined){
   return `<div class=nowrap>${a}</div>`
 }
 
-
-const routes2={
-  commits:{
-    path:'/commits:syspath(*)',
-    gen({syspath}:{syspath:string}){
-      return `/commits:${syspath}`
-    },
-    async handler(req:Request, res:Response){
-      const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commits'})  
-      const {parent_relative,git}=render_data 
-      function hash_link(x:string|undefined){
-        if (x==null)
-          return undefined  
-        return {
-          href:`/ls/${parent_relative}/${x}/`,
-          x:x.slice(0,9)
-        }
-      }
-      const commits=await git.log()//,re,'hash','message')
-      const body=commits.map(({branch,author,date,commit,mergeparent,message,parent})=>(
-        {
-          commit:hash_link(commit),
-          merge:hash_link(mergeparent),
-          //parent,
-          author,
-          message,
-          branch,
-          'time ago':nowrap(date_to_timesince(date))
-        }
-      ))
-      const content=render_table3({req,body})
-      res.end(render_page(content,render_data))
-    }
-  }
-}
-
-async  function handler_branches(req:Request, res:Response){
-  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'branches'})  
-  const {parent_relative,git}=render_data
-  const branches = (await git.branch())
-  const body=branches.map(({branch,commit,current,message,date})=>({
-      branch,
-      hash:linked_hash2({parent_relative,commit}),
-      message,
-      current,
-      'time ago':nowrap(date_to_timesince(date))
-  }))
-  const content=render_table3({body,req})
-  res.end(render_page(content,render_data))
-}
-
-async  function handler_commitdiff (req:Request, res:Response){
-  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commitdiff'})
-  const {parent_absolute}=render_data
-  const git = new SimplerGit({parent_absolute});
-  const commit=req.params.commit
-  if (commit==null){
-    res.redirect('/')
-    return
-  }
-  const files = await git.diffSummary(`${commit}~1`, commit)
-  /*
-  const files_data=files.map((x)=>{
-    const {filename,binary}=x
-    const ans={
-      file,
-      binary,
-      changes:0,
-      insertions:0,
-      deletions:0
-    }
-    if ('changes' in x){
-      return {...ans,...pk(x,'changes','insertions','deletions')}
-    }
-    return ans
-
-  })*/
-  const content=render_table2(render_data.req,files)
-//  const content=JSON.stringify(diffSummary,null,2)
-  res.end(render_page(`<pre>${content}</pre>`,render_data))
-}
-
 function icon(is_dir:boolean){
   return is_dir?'&#128193;': FILE_ICON
 }
@@ -241,44 +149,6 @@ async function render_dir(render_data:RenderData,res:Response){
   res.end(render_page(content,render_data))
   return
 }
-async function handler_ls(req:Request, res:Response){
-  const {gitpath,commit}=req.params
-  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
-  const {git,parent_relative}=render_data
-  const ret=await git.ls(commit!,gitpath!)
-  const body=ret.map(({size,is_dir,filename})=>({
-    filename:{
-      x:filename,
-      icon:icon(is_dir),
-      href:`/${is_dir?'ls':'show'}/${parent_relative}/${commit}/${gitpath}/${filename}`,
-    },
-    size    : size&&{x:size,content:formatBytes(size)}
-  }))
-  const content=render_table3({body,req})
-  res.end(render_page(content,render_data))
- }
- async function handler_show(req:Request, res:Response){
-  const {gitpath,commit}=req.params
-  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
-  const {git,parent_relative}=render_data
-  const format=guessFileFormat(gitpath!)
-  if (format==='image'){
-    res.end(render_page(`<br><img src='/rawshow/${parent_relative}/${commit}/${gitpath}'>`,render_data))
-    return
-  }
-  const content=await git.show(commit!, gitpath!)
-  res.end(render_page(`<pre>${content}</pre>`,render_data))
- }
- async function handler_rawshow(req:Request, res:Response){
-  const {gitpath,commit}=req.params
-  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
-  const {git}=render_data
-  const ans=git.show_stream(commit!, gitpath!)
-  const mimetype=guessMimeType(gitpath!)
-  res.setHeader('Content-Type',mimetype );
-  ans.stdout.pipe(res)
- }
-
 function redirect_to_files(req:Request, res:Response){
   const url=req.params[0]||'/'
   res.redirect(`/files${url}`)
@@ -321,57 +191,197 @@ function bufferToHex(buffer: Buffer): string {
 
   return hexString;
 }
-async  function handler_files(req:Request, res:Response){
-  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'files'})
-  const {parent_absolute,stats:{is_dir,filename}}=render_data
-  if (is_dir){
-    return render_dir(render_data,res)
-  }
-  const format=guessFileFormat(filename)
-  if (format==='image'){
-    res.end(render_image(render_data))
-    return
-  }
-  if (format==='video'){
-    const content=`<br><video controls>
-    <source src="/static/${parent_absolute}" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>`
-    res.end(render_page(content,render_data))
-    return
-  }
-  const {txt,buf,binary}=await readfile(parent_absolute)
-  if (binary){
-    const hex=bufferToHex(buf);
-    res.end(render_page(`<div class=info>file is binary</div><pre>${hex}</pre>`,render_data))    
-    return
-  }
-  //const txt=buf.toString('utf8')
-
-  if (format==null){
-    res.end(render_page(`<div class=info>unrecogrnized format: rendering as text</div><pre>${txt}</pre>`,render_data))
-    return
-  }
-  if (format==='markdown'){
-    res.end(render_page(await marked.parse(txt),render_data))
-    return
-  }    
-  const {value,language}=await hljs.highlight(format,txt)
-  render_data.language=language
-  res.end(render_page(`<pre>${value}</pre>`,render_data))
-}
-type ExpressHandler=(req: Request, res: Response, next?: NextFunction)=>Promise<void> 
-export function catcher(fn:ExpressHandler){
-  const ans:ExpressHandler= async function (req, res, next) {
-    try {
-      await fn(req, res, next)
-    } catch (error) {
-        res.end(render_simple_error_page('ouch, an internal rerror',error as Error))
-        //res.status(500).send(); // Handle error in case next is not provided
+const routes2={
+  commits:{
+    path:'/commits:syspath(*)',
+    gen({syspath}:{syspath:string}){
+      return `/commits:${syspath}`
+    },
+    async handler(req:Request, res:Response){
+      const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commits'})  
+      const {parent_relative,git}=render_data 
+      function hash_link(x:string|undefined){
+        if (x==null)
+          return undefined  
+        return {
+          href:`/ls/${parent_relative}/${x}/`,
+          x:x.slice(0,9)
+        }
+      }
+      const commits=await git.log()//,re,'hash','message')
+      const body=commits.map(({branch,author,date,commit,mergeparent,message,parent})=>(
+        {
+          commit:hash_link(commit),
+          merge:hash_link(mergeparent),
+          //parent,
+          author,
+          message,
+          branch,
+          'time ago':nowrap(date_to_timesince(date))
+        }
+      ))
+      const content=render_table3({req,body})
+      res.end(render_page(content,render_data))
     }
-  };
-  return ans
+  },
+  branches:{
+    path:'/branches:syspath(*)',
+    gen({syspath}:{syspath:string}){
+      return `/branches:${syspath}`
+    },    
+    async handler (req:Request, res:Response){
+      const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'branches'})  
+      const {parent_relative,git}=render_data
+      const branches = (await git.branch())
+      const body=branches.map(({branch,commit,current,message,date})=>({
+          branch,
+          hash:linked_hash2({parent_relative,commit}),
+          message,
+          current,
+          'time ago':nowrap(date_to_timesince(date))
+      }))
+      const content=render_table3({body,req})
+      res.end(render_page(content,render_data))
+    }
+  },
+  commitdiff:{
+    path: `/commitdiff:syspath(*)/:commit1${hex}/:commit2${hex}/`,
+    gen({syspath,commit1,commit2}:{syspath:string,commit1:string,commit2:string}){
+      return `/commitdiff:${syspath}/${commit1}/${commit2}/`
+    },  
+    async handler(req:Request, res:Response){
+      const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commitdiff'})
+      const {parent_absolute}=render_data
+      const git = new SimplerGit({parent_absolute});
+      const commit=req.params.commit
+      if (commit==null){
+        res.redirect('/')
+        return
+      }
+      const files = await git.diffSummary(`${commit}~1`, commit)
+      /*
+      const files_data=files.map((x)=>{
+        const {filename,binary}=x
+        const ans={
+          file,
+          binary,
+          changes:0,
+          insertions:0,
+          deletions:0
+        }
+        if ('changes' in x){
+          return {...ans,...pk(x,'changes','insertions','deletions')}
+        }
+        return ans
+
+      })*/
+      const content=render_table2(render_data.req,files)
+    //  const content=JSON.stringify(diffSummary,null,2)
+      res.end(render_page(`<pre>${content}</pre>`,render_data))
+    }
+  },
+  ls:{
+    path:`/ls:syspath(*)/:commit${hex}/:gitpath(*)`,
+    gen({ syspath, commit, gitpath }: { syspath: string; commit: string; gitpath: string }) {
+      return `/ls:${syspath}/${commit}/${gitpath}`;
+    },
+    async handler(req:Request, res:Response){
+      const {gitpath,commit}=req.params
+      const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
+      const {git,parent_relative}=render_data
+      const ret=await git.ls(commit!,gitpath!)
+      const body=ret.map(({size,is_dir,filename})=>({
+        filename:{
+          x:filename,
+          icon:icon(is_dir),
+          href:`/${is_dir?'ls':'show'}/${parent_relative}/${commit}/${gitpath}/${filename}`,
+        },
+        size    : size&&{x:size,content:formatBytes(size)}
+      }))
+      const content=render_table3({body,req})
+      res.end(render_page(content,render_data))
+    }
+  },
+  show:{
+    path:`/show:syspath(*)/:commit${hex}/:gitpath(*)`,
+    gen({ syspath, commit, gitpath }: { syspath: string; commit: string; gitpath: string }) {
+      return `/ls:${syspath}/${commit}/${gitpath}`;
+    },
+    async handler(req:Request, res:Response){
+      const {gitpath,commit}=req.params
+      const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
+      const {git,parent_relative}=render_data
+      const format=guessFileFormat(gitpath!)
+      if (format==='image'){
+        res.end(render_page(`<br><img src='/rawshow/${parent_relative}/${commit}/${gitpath}'>`,render_data))
+        return
+      }
+      const content=await git.show(commit!, gitpath!)
+      res.end(render_page(`<pre>${content}</pre>`,render_data))
+    }
+  },
+  rawshow:{
+    path:`/rawshow:syspath(*)/:commit${hex}/:gitpath(*)`,
+    gen({ syspath, commit, gitpath }: { syspath: string; commit: string; gitpath: string }) {
+      return `/ls:${syspath}/${commit}/${gitpath}`;
+    },    
+    async handler(req:Request, res:Response){
+      const {gitpath,commit}=req.params
+      const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
+      const {git}=render_data
+      const ans=git.show_stream(commit!, gitpath!)
+      const mimetype=guessMimeType(gitpath!)
+      res.setHeader('Content-Type',mimetype );
+      ans.stdout.pipe(res)
+    }
+  },
+  files:{
+    path: '/files:syspath(*)',
+    gen({syspath}:{syspath:string}){
+      return `/files:${syspath}`
+    },
+    async handler(req:Request, res:Response){
+      const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'files'})
+      const {parent_absolute,stats:{is_dir,filename}}=render_data
+      if (is_dir){
+        return render_dir(render_data,res)
+      }
+      const format=guessFileFormat(filename)
+      if (format==='image'){
+        res.end(render_image(render_data))
+        return
+      }
+      if (format==='video'){
+        const content=`<br><video controls>
+        <source src="/static/${parent_absolute}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>`
+        res.end(render_page(content,render_data))
+        return
+      }
+      const {txt,buf,binary}=await readfile(parent_absolute)
+      if (binary){
+        const hex=bufferToHex(buf);
+        res.end(render_page(`<div class=info>file is binary</div><pre>${hex}</pre>`,render_data))    
+        return
+      }
+      //const txt=buf.toString('utf8')
+
+      if (format==null){
+        res.end(render_page(`<div class=info>unrecogrnized format: rendering as text</div><pre>${txt}</pre>`,render_data))
+        return
+      }
+      if (format==='markdown'){
+        res.end(render_page(await marked.parse(txt),render_data))
+        return
+      }    
+      const {value,language}=await hljs.highlight(format,txt)
+      render_data.language=language
+      res.end(render_page(`<pre>${value}</pre>`,render_data))
+    }
+  }
 }
+
 async function run_app() {
   try{
     const config=await read_config('./filebrowser.json')
@@ -389,16 +399,13 @@ async function run_app() {
     app.use(express.urlencoded({ extended: false }));
     app.use(password_protect(config.password))
     app.use('/static',express.static('/'))
-    app.get(routes.ls,catcher(handler_ls))
-    app.get(routes.show,catcher(handler_show))
-    app.get(routes.rawshow,catcher(handler_rawshow))
-    
-    app.get(routes.files,catcher(handler_files))
+    //app.get(routes.ls,catcher(handler_ls))
+
     //app.get(routes.commits,catcher(handler_commits))
-    app.get(routes.branches,catcher(handler_branches))
-    app.get(routes.commitDiff,catcher(handler_commitdiff))
+    //app.get(routes.branches,catcher(handler_branches))
+    //app.get(routes.commitDiff,catcher(handler_commitdiff))
     add_routes(routes2,app)
-    app.get('/*',redirect_to_files)
+    //app.get('/*',redirect_to_files)
     const server= await async function(){
       if (protocol==='https')
         return await https.createServer({cert,key}, app)

@@ -1,13 +1,16 @@
-import {Express,RequestHandler} from 'express';
-interface Route{
-  path:string
-  gen:(a:Record<string,string>)=>string
-  handler:RequestHandler
-}
-export type Routes=Record<string,Route>
-export function add_routes(a:Routes,app:Express){
-  for (const {path,handler} of Object.values(a)){
-    app.get(path,handler)
+
+
+/*const routes2={
+  commits:{
+    path:'/commits:syspath(*)',
+    gen({syspath}:{syspath:string}){
+      return `/commits:${syspath}`
+    },
+    handler:async (req:Request, res:Response)=>{
+      console.log(req,res)
+    }
   }
-  console.log(a)
 }
+function add_it(app:Express){
+    add_routes(routes2,app)//Property 'syspath' is missing in type 'Record<string, string>' but required in type '{ syspath: string; }'.ts(2345)
+}*/

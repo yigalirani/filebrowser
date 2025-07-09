@@ -20,8 +20,9 @@ async function readFileIfExists  (field:string,filename:unknown){
       return undefined
     }
     return content;
-  }catch(ex){
-    console.warn(`cant read ${field}: ${ex.message}`)
+  }catch(ex: unknown){
+    const message = ex instanceof Error ? ex.message : String(ex);
+    console.warn(`cant read ${field}: ${message}`)
     return undefined
   }
 }
