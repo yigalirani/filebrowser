@@ -1,5 +1,5 @@
 
-import express, { Request, Response,NextFunction} from 'express';
+import express, { Request, Response,NextFunction, Router} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
 import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,encode_path,DataTable,render_table3} from './utils';
@@ -12,6 +12,7 @@ import http from 'http'
 import https from 'https'
 //import {simpleGit} from 'simple-git';
 import {SimplerGit} from './simpler_git';
+import {add_routes} from './router'
 
 
 //import {encode} from 'html-entities'
@@ -41,7 +42,7 @@ async function mystats({parent_absolute,base,root_dir}:{ //absolute_path is a di
     const {size,mtimeMs:changed }=stats
     return {filename,relative,is_dir,size,changed}
   }catch(ex){
-    return {filename:base,relative,error:get_error(ex),is_dir:false}
+    return {filename:base,relative,error:get_error(ex as Error),is_dir:false}
   } 
 }
 const hex = '([0-9a-fA-F]{5,40})';
@@ -129,32 +130,41 @@ function nowrap(a:string|undefined){
 }
 
 
-async  function handler_commits(req:Request, res:Response){
-  const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commits'})  
-  const {parent_relative,git}=render_data 
-  function hash_link(x:string|undefined){
-    if (x==null)
-      return undefined  
-    return {
-      href:`/ls/${parent_relative}/${x}/`,
-      x:x.slice(0,9)
+const routes2={
+  commits:{
+    path:'/commits:syspath(*)',
+    gen({syspath}:{syspath:string}){
+      return `/commits:${syspath}`
+    },
+    async handler(req:Request, res:Response){
+      const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'commits'})  
+      const {parent_relative,git}=render_data 
+      function hash_link(x:string|undefined){
+        if (x==null)
+          return undefined  
+        return {
+          href:`/ls/${parent_relative}/${x}/`,
+          x:x.slice(0,9)
+        }
+      }
+      const commits=await git.log()//,re,'hash','message')
+      const body=commits.map(({branch,author,date,commit,mergeparent,message,parent})=>(
+        {
+          commit:hash_link(commit),
+          merge:hash_link(mergeparent),
+          //parent,
+          author,
+          message,
+          branch,
+          'time ago':nowrap(date_to_timesince(date))
+        }
+      ))
+      const content=render_table3({req,body})
+      res.end(render_page(content,render_data))
     }
   }
-  const commits=await git.log()//,re,'hash','message')
-  const body=commits.map(({branch,author,date,commit,mergeparent,message,parent})=>(
-    {
-      commit:hash_link(commit),
-      merge:hash_link(mergeparent),
-      //parent,
-      author,
-      message,
-      branch,
-      'time ago':nowrap(date_to_timesince(date))
-    }
-  ))
-  const content=render_table3({req,body})
-  res.end(render_page(content,render_data))
 }
+
 async  function handler_branches(req:Request, res:Response){
   const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'branches'})  
   const {parent_relative,git}=render_data
@@ -356,7 +366,7 @@ export function catcher(fn:ExpressHandler){
     try {
       await fn(req, res, next)
     } catch (error) {
-        res.end(render_simple_error_page('ouch, an internal rerror',error))
+        res.end(render_simple_error_page('ouch, an internal rerror',error as Error))
         //res.status(500).send(); // Handle error in case next is not provided
     }
   };
@@ -384,9 +394,10 @@ async function run_app() {
     app.get(routes.rawshow,catcher(handler_rawshow))
     
     app.get(routes.files,catcher(handler_files))
-    app.get(routes.commits,catcher(handler_commits))
+    //app.get(routes.commits,catcher(handler_commits))
     app.get(routes.branches,catcher(handler_branches))
     app.get(routes.commitDiff,catcher(handler_commitdiff))
+    add_routes(routes2,app)
     app.get('/*',redirect_to_files)
     const server= await async function(){
       if (protocol==='https')
