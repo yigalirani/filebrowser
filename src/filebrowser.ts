@@ -110,7 +110,8 @@ function linked_hash2({parent_relative,commit}:{
   commit:string
 }){
     const trimmed=commit.slice(0,9)
-    return `<a class=linkedhash href=/ls/${parent_relative}/${commit}/>${trimmed}</a>`
+    const href=routes2.ls.gen({syspath:parent_relative,commit,gitpath:''})
+    return `<a class=linkedhash href=${href}/>${trimmed}</a>`
     //return `<a class=linkedhash href=/commitdiff/${trimmed}/${parent_relative}>${trimmed}</a>`
 }
 function nowrap(a:string|undefined){
@@ -148,7 +149,7 @@ async function render_dir(render_data:RenderData,res:Response){
   const content=render_table3({req,body,filterable:['filename']})
   res.end(render_page(content,render_data))
   return
-}
+} 
 function redirect_to_files(req:Request, res:Response){
   const url=req.params[0]||'/'
   res.redirect(`/files${url}`)
@@ -283,10 +284,10 @@ const routes2={
   ls:{
     path:`/ls:syspath(*)/:commit${hex}/:gitpath(*)`,
     gen({ syspath, commit, gitpath }: { syspath: string; commit: string; gitpath: string }) {
-      return `/ls:${syspath}/${commit}/${gitpath}`;
+      return `/ls/${syspath}/${commit}${gitpath}`;
     },
     async handler(req:Request, res:Response){
-      const {gitpath,commit}=req.params
+      const {gitpath,commit,syspath}=req.params
       const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
       const {git,parent_relative}=render_data
       const ret=await git.ls(commit!,gitpath!)
@@ -405,7 +406,7 @@ async function run_app() {
     //app.get(routes.branches,catcher(handler_branches))
     //app.get(routes.commitDiff,catcher(handler_commitdiff))
     add_routes(routes2,app)
-    //app.get('/*',redirect_to_files)
+    app.get('/*',redirect_to_files)
     const server= await async function(){
       if (protocol==='https')
         return await https.createServer({cert,key}, app)
