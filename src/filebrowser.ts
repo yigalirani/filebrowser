@@ -234,11 +234,13 @@ const routes2={
       const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'branches'})  
       const {parent_relative,git}=render_data
       const branches = (await git.branch())
-      const body=branches.map(({branch,commit,current,message,date})=>({
+      const body=branches.map(({branch,parent,commit,current,message,date})=>({
+          current,
           branch,
           hash:linked_hash2({parent_relative,commit}),
+          parent:linked_hash2({parent_relative,commit:parent}),
+
           message,
-          current,
           'time ago':nowrap(date_to_timesince(date))
       }))
       const content=render_table3({body,req})

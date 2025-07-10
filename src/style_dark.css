@@ -1,6 +1,9 @@
 table td{
   background-color: #22415e;
   padding: 5px;
+  vertical-align: top;
+
+
 }
 table th{
   background-color: #690303;
@@ -275,10 +278,11 @@ table b{
   white-space: nowrap;
 } 
 td {
-  white-space: nowrap;  /* Prevent text wrapping */
-  overflow: hidden;     /* Hide overflowing content */
-  text-overflow: ellipsis; /* Add "..." for clipped text */
+  /*white-space: nowrap;*/  /* Prevent text wrapping */
+  overflow: auto;     /* Hide overflowing content */
   background-color: #1f6feb;
+  max-width: 500px;
+  max-height: 500px;
 } 
 td.undef{
   background-color: #212e40;

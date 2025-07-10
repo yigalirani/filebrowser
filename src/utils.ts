@@ -15,19 +15,19 @@ export function timeSince(ago_time:number|undefined) {
       return floored_interval+' '+unit
     return floored_interval+' '+unit+'s'
   }
-  if (interval >= 2)
+  if (interval >= 20)
     return render_ago('year');
   interval = seconds / 2592000;
-  if (interval >= 2) 
+  if (interval >= 20) 
     return render_ago('month');
   interval = seconds / 86400;
-  if (interval >= 1) 
+  if (interval >= 10) 
     return render_ago('day');
   interval = seconds / 3600;
-  if (interval > 1) 
+  if (interval > 10) 
     return render_ago('hour')
   interval = seconds / 60;
-  if (interval > 1) 
+  if (interval > 10) 
     return render_ago('minute')
   interval = seconds
   return render_ago('second')

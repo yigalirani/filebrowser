@@ -66,7 +66,7 @@ module.exports = {
         //  'plugin:@typescript-eslint/recommended-requiring-type-checking'
         ],
         rules: {
-          "quotes": [2, "single", { "avoidEscape": true }],
+          //"quotes": [2, "single", { "avoidEscape": true }],
           "no-empty-pattern":"off",
           "import/no-unresolved":"warn",
           "no-use-before-define":"warn",

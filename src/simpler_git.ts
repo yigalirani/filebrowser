@@ -1,5 +1,6 @@
 import { exec,spawn  } from 'node:child_process';
 import { promisify } from 'util';
+import { parse } from "csv-parse/sync";
 import path from 'node:path';
 const {posix}=path
 //import { s2s } from './utils';
@@ -74,7 +75,11 @@ function str(x:string|undefined){
     return ''
   return x  
 }
-
+function row_split(row:string,field_sep:RegExp|undefined):string[]{
+  if (field_sep==null)
+    return parse(row)[0]
+  return row.split(field_sep)
+}
 export class SimplerGit {
     private parent_absolute: string;
     public last_command='';
@@ -187,7 +192,7 @@ export class SimplerGit {
 */  async map_run<T>({command,record_sep,field_sep}:{
       command:string,
       record_sep:RegExp,
-      field_sep:RegExp
+      field_sep?:RegExp
     },f:(a:string[])=>T){
       const ans:T[]=[]
       //try{
@@ -195,7 +200,7 @@ export class SimplerGit {
         const ret=await this.run(command)
         const rows=ret.split(record_sep).filter(Boolean)
         for (const row of rows){
-          const row_splitted = row.split(field_sep);
+          const row_splitted = row_split(row,field_sep);
           ans.push(f(row_splitted))
         }
         return ans
@@ -239,18 +244,18 @@ export class SimplerGit {
     }
     async branch(): Promise<CommitInfo[]>{
       return await this.map_run({
-        command:'git for-each-ref refs/heads/ --format="%(objectname),%(authorname),%(authordate:iso),%(parent),%(subject),%(refname:short),%(if)%(HEAD)=*%(then)true%(else)false%(end)"',
+        command:`git for-each-ref --format=%(HEAD),%(refname:short),%(objectname),%(authorname),%(authordate),%(subject:sanitize),%(parent) refs/heads/`,
         record_sep:/\n/,
-        field_sep:/,/},
+        },
         row=>{
          return {
-          commit:row[0]!,
-            author:row[1]!,
-            date:row[2]!,
-            parent:row[3]!,
-            message:row[4]!,
-            branch:row[5]!,
-            current:row[6]!
+          commit:row[2]!,
+            author:row[3]!,
+            date:row[4]!,
+            parent:row[6]!,
+            message:row[5]!,
+            branch:row[1]!,
+            current:row[0]!
         }})
     }
     async diffSummary(a:string,b:string):Promise<CommitDiff[]>{
