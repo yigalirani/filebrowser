@@ -98,7 +98,7 @@ export class SimplerGit {
     private run_spawn(command: string) {
       const {parent_absolute}=this
       const subcommands=command.split(' ').filter(Boolean)
-      if (subcommands.length==0)
+      if (subcommands.length===0)
         throw new Error('empty command')
       const ans=spawn(subcommands[0]!,subcommands.slice(1),{cwd:parent_absolute})
       return ans
@@ -107,7 +107,7 @@ export class SimplerGit {
       try{
         await this.run('git status')
         return true
-      }catch(ex){
+      }catch(_ex){
         return false
       }
     }
@@ -216,7 +216,7 @@ export class SimplerGit {
         field_sep:/\s+/},
       row=>({
         mode:str(row[0]),
-        is_dir:row[1]=='tree',
+        is_dir:row[1]==='tree',
         hash:str(row[2]),
         size:parse_int(row[3]),
         filename:posix.basename(row[4]||'')

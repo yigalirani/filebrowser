@@ -12,16 +12,16 @@ export function password_protect(app_password:string|undefined){
     }
   }
   return  function (req:Request, res:Response, next:NextFunction) {
-    if (req.url=='/logout'){
+    if (req.url==='/logout'){
       req.session.authenticated = false;
       res.redirect('/');
       return      
     }
     if (req.session.authenticated)
       return next();
-    if (req.url=='/login'){
+    if (req.url==='/login'){
       const { password } = req.body;
-      if (password==app_password){
+      if (password===app_password){
         req.session.authenticated=true
         res.redirect(req.body.returnPath+'');
         return

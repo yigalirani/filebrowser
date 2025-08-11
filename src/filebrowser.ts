@@ -161,7 +161,7 @@ async function readfile(fileName: string) {
     try {
       const txt=text_decoder.decode(buf); // Will throw if invalid UTF-8
       return {txt,binary:false,buf}
-  } catch (e) {
+  } catch (_e) {
       return {txt:'binary file',binary:true,buf}
   }
 }
@@ -210,7 +210,7 @@ const routes2={
         }
       }
       const commits=await git.log()//,re,'hash','message')
-      const body=commits.map(({branch,author,date,commit,mergeparent,message,parent})=>(
+      const body=commits.map(({branch,author,date,commit,mergeparent,message/*,parent*/})=>(
         {
           commit:hash_link(commit),
           merge:hash_link(mergeparent),
@@ -289,7 +289,7 @@ const routes2={
       return `/ls/${syspath}/${commit}${gitpath}`;
     },
     async handler(req:Request, res:Response){
-      const {gitpath,commit,syspath}=req.params
+      const {gitpath,commit/*,syspath*/}=req.params
       const render_data=await render_data_redirect_if_needed({req,res,cur_handler:'ls',need_git:true})
       const {git,parent_relative}=render_data
       const ret=await git.ls(commit!,gitpath!)

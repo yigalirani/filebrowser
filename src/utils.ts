@@ -136,7 +136,7 @@ export function render_fields<T,K extends keyof T>  (obj:T,...fields:K[]){
       ans.push(`<tr><td>${String(field)}</td><td>${value}</td></tr>`) ;
     }
   }
-  if (ans.length==0)
+  if (ans.length===0)
     return ''
   return `<table class=fieldstable>${ans.join('\n')}</table>`
 }
@@ -168,7 +168,7 @@ function calc_content(a:DataCell|undefined){
   return icon?`<div class=icon>${icon}</div>${ans}`:ans
 }
 function calc_x(a:DataCell|undefined){
-  if (isAtom(a)||a==undefined)
+  if (isAtom(a)||a===undefined)
     return a
   return a.x
 }
@@ -240,7 +240,7 @@ export function sortArrayByField(array:  DataTable, req:Request) {
   return array.sort((a, b) => {
       const fieldA = calc_x(a[sort_fiels]);
       const fieldB = calc_x(b[sort_fiels]);
-      if (fieldA == fieldB)
+      if (fieldA === fieldB)
         return 0
       if (fieldA==null) 
         return mult

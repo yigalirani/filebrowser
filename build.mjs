@@ -1,5 +1,5 @@
-import * as esbuild from 'esbuild'
-import {transform } from 'esbuild'
+import * as esbuild from './tools/esbuild/node_modules/esbuild/lib/main.js'
+
 import { readFile } from 'fs/promises'
 
 export const CSSMinifyPlugin = {
@@ -7,7 +7,7 @@ export const CSSMinifyPlugin = {
     setup(build) {
         build.onLoad({ filter: /\.css$/ }, async (args) => {
             const f = await readFile(args.path)
-            const css = await transform(f, { loader: 'css', minify: true })
+            const css = await esbuild.transform(f, { loader: 'css', minify: true })
             return { loader: 'text', contents: css.code }
         })
     }
