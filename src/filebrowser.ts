@@ -1,9 +1,9 @@
 
-import express, { Request, Response} from 'express';
+import  express,{ type Request, type Response} from 'express';
 import session from 'express-session';
 import { promises as fs } from 'fs';
-import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,encode_path,DataTable,render_table3} from './utils';
-import {RenderData,MyStats} from './types'
+import {get_error,parse_path_root,date_to_timesince,formatBytes,timeSince,render_table2,encode_path,type DataTable,render_table3} from './utils';
+import type { RenderData, MyStats} from './types'
 import {guessFileFormat,guessMimeType} from './fileformat'
 import {password_protect} from './pass'
 import hljs from 'highlight.js'
@@ -116,7 +116,7 @@ function linked_hash2({parent_relative,commit}:{
 }
 function nowrap(a:string|undefined){
   if (a==null)
-    return undefined
+    return 
   return `<div class=nowrap>${a}</div>`
 }
 
@@ -155,13 +155,13 @@ function redirect_to_files(req:Request, res:Response){
   res.redirect(`/files${url}`)
 
 }
-const text_decoder = new TextDecoder('utf-8', { fatal: true });
+const text_decoder = new TextDecoder('utf8', { fatal: true });
 async function readfile(fileName: string) {
     const buf = await fs.readFile(fileName);
     try {
       const txt=text_decoder.decode(buf); // Will throw if invalid UTF-8
       return {txt,binary:false,buf}
-  } catch (_e) {
+  } catch {
       return {txt:'binary file',binary:true,buf}
   }
 }
@@ -177,12 +177,12 @@ function bufferToHex(buffer: Buffer): string {
       const lineBytes = buffer.slice(i, i + bytesPerLine);
 
       // Convert bytes to hex
-      const hexBytes = Array.from(lineBytes)
+      const hexBytes = [...lineBytes]
           .map(byte => byte.toString(16).padStart(2, '0'))
           .join(' ');
 
       // Convert bytes to ASCII, replacing non-printable characters with "."
-      const asciiRepresentation = Array.from(lineBytes)
+      const asciiRepresentation = [...lineBytes]
           .map(byte => (byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : '.'))
           .join('');
 

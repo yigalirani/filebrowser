@@ -1,8 +1,8 @@
 //import {Stats} from 'fs'
-import {Request} from 'express';
-import {SimplerGit} from './simpler_git'
+import type {Request} from 'express';
+import type {SimplerGit} from './simpler_git'
 
-export type MyStats={
+export interface MyStats{
   is_dir  : boolean;
   error?   : string;
   filename : string;
@@ -13,11 +13,7 @@ export type MyStats={
   changed?:number;
   //stats?   : Stats
 }
-export enum LegType {
-  Regular=1,
-  Home=2,
-  Gray=3,
-}
+export type LegType='regular'|'home'|'gray'
 export interface RenderData {
   req             : Request,
   fields          : unknown,

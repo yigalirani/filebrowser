@@ -65,7 +65,7 @@ function normalize_path2(str: string): string {
 }
 
 function parse_int(x:string|undefined){
-  const ans=parseInt(x+'')
+  const ans=parseInt(x+'',10)
   if (isNaN(ans))
     return 0
   return ans
@@ -92,7 +92,7 @@ export class SimplerGit {
       const {parent_absolute}=this
       console.log({command,parent_absolute})
         process.chdir(this.parent_absolute);
-        const { stdout } = await execAsync(command,{maxBuffer:1000000000});
+        const { stdout } = await execAsync(command,{maxBuffer:1_000_000_000});
         return stdout.trim();
     }
     private run_spawn(command: string) {
@@ -107,7 +107,7 @@ export class SimplerGit {
       try{
         await this.run('git status')
         return true
-      }catch(_ex){
+      }catch{
         return false
       }
     }
@@ -210,7 +210,7 @@ export class SimplerGit {
       //}
     }
     async ls(commit:string,path:string): Promise<LsTree[]>{
-      return this.map_run({
+      return await this.map_run({
         command:`git ls-tree -l ${commit} ${normalize_path(path)}`,
         record_sep:/\n/,
         field_sep:/\s+/},
@@ -223,7 +223,7 @@ export class SimplerGit {
       }))
     }
     async log(branch=''): Promise<CommitInfo[]> {
-      return this.map_run({
+      return await this.map_run({
         command:`git log  ${branch} --pretty=format:"%H %P%n%an%n%ad%n%s%n%D%n`,
         record_sep:/\n\n+/,
         field_sep:/\n/},
@@ -247,8 +247,8 @@ export class SimplerGit {
         command:`git for-each-ref --format=%(HEAD),%(refname:short),%(objectname),%(authorname),%(authordate),%(subject:sanitize),%(parent) refs/heads/`,
         record_sep:/\n/,
         },
-        row=>{
-         return {
+        row=>
+          ({
           commit:row[2]!,
             author:row[3]!,
             date:row[4]!,
@@ -256,7 +256,7 @@ export class SimplerGit {
             message:row[5]!,
             branch:row[1]!,
             current:row[0]!
-        }})
+        }))
     }
     async diffSummary(a:string,b:string):Promise<CommitDiff[]>{
       return await this.map_run({
@@ -264,13 +264,13 @@ export class SimplerGit {
         record_sep:/\n/,
         field_sep:
         /\s+/},
-        row=>{
-        return {
+        row=>(
+         {
           filename:row[2]!,
-          deletions:parseInt(row[0]!),
-          additions:parseInt(row[1]!)
-        }
-      })
+          deletions:parseInt(row[0]!,10),
+          additions:parseInt(row[1]!,10)
+        })
+      )
     }
 /*
     private async getForkCommit(branch: string): Promise<string> {

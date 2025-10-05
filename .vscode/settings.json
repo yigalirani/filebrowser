@@ -1,8 +1,5 @@
 {
   "typescript.tsdk": "node_modules\\typescript\\lib",
-  "eslint.nodePath": "tools/eslint/node_modules",
-  "eslint.options": {
-    "overrideConfigFile": "./tools/eslint/eslint.config.mjs"
-  },
-  "eslint.trace.server": "messages" 
+  "oxc.typeAware":true
+
 }

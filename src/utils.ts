@@ -1,14 +1,14 @@
 import path from 'node:path'
-import { Request} from 'express';
-import {RenderData,LegType} from './types'
+import type { Request} from 'express';
+import  type{ RenderData,LegType} from './types';
 const {posix}=path
 export function timeSince(ago_time:number|undefined) {
   if (ago_time==null)
-    return undefined
+    return
   const cur_time = Date.now()
   const ms=cur_time-ago_time  
   const seconds = Math.floor(ms / 1000);
-  let interval = seconds / 31536000;
+  let interval = seconds / 31_536_000;
   function render_ago(unit:string){
     const floored_interval=Math.floor(interval)
     if (floored_interval===0)
@@ -17,10 +17,10 @@ export function timeSince(ago_time:number|undefined) {
   }
   if (interval >= 20)
     return render_ago('year');
-  interval = seconds / 2592000;
+  interval = seconds / 2_592_000;
   if (interval >= 20) 
     return render_ago('month');
-  interval = seconds / 86400;
+  interval = seconds / 86_400;
   if (interval >= 10) 
     return render_ago('day');
   interval = seconds / 3600;
@@ -48,11 +48,12 @@ export function formatBytes(bytes: number|undefined): string|undefined {
   const decimals = 2
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
+// oxlint-disable-next-line prefer-math-min-max
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   const size = sizes[i];
-  const formattedBytes = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
+  const formattedBytes = parseFloat((bytes / k**i).toFixed(dm));
   return `${formattedBytes} ${size}`;
 } 
 export function encode_path(absolute:string){
@@ -95,12 +96,12 @@ export function parse_path_root(render_data:RenderData){
       console.warn('path dot not extend root')
       return
     }
-    const leg_type=function(){
+    const leg_type:LegType=function(){
       if (i+1===root_dir_legs.length)
-        return LegType.Home
+        return 'home'
       if (i+1>root_dir_legs.length)
-        return LegType.Regular
-      return LegType.Gray
+        return 'regular'
+      return 'gray'
     }()
     ans.push({leg,leg_type})
   }
@@ -119,15 +120,7 @@ export function nl<T>(value: T | null | undefined): T {
 }
 export type s2s=Record<string,Atom>
 export type s2any=Record<string,unknown>
-export function pk<T,K extends keyof T>(obj:T,...keys:K[]):Pick<T,K> {
-  //taken from https://stackoverflow.com/a/47232883/39939
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    const ret:any={};
-  keys.forEach(key=> {
-    ret[key]=obj[key];
-  }) 
-  return ret;
-}
+
 export function render_fields<T,K extends keyof T>  (obj:T,...fields:K[]){
   const ans:string[]=[]
   for (const field of fields){
@@ -154,7 +147,7 @@ type DataCell={
 
 function calc_content(a:DataCell|undefined){
   if (a==null)
-    return undefined
+    return
   if (isAtom(a))
     return a
   const {x,content,href,icon}=a

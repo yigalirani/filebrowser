@@ -1,7 +1,7 @@
-import { Request,Express,RequestHandler} from 'express';
+import type { Request,Express,RequestHandler} from 'express';
 
 import {encode_path,render_fields} from './utils'
-import {LegType,MyStats,RenderData} from './types'
+import type{ MyStats, RenderData} from './types';
 import {encode} from 'html-entities'
 import style from './style.css'
 
@@ -70,13 +70,14 @@ function render_breadcrumbs(render_data:RenderData){
   const ans:string[]=[]
   let href='/files/'
   for (const {leg,leg_type} of legs!){ //is there a better way than using that asterics to assert non-null?
-    if (leg_type===LegType.Regular)
-      href+=leg+'/'    
+    if (leg_type==='regular')
+      href+=`${leg}/`    
     const render_leg=function(){
       switch(leg_type){
-        case LegType.Gray:return `<div class=inactive_leg>${leg} / </div>`
-        case LegType.Home:return `<a href='${href}'>${HOME_ICON} ${leg} </a> /`
-        case LegType.Regular:return `<a href='${href}'> ${leg} </a> /`
+        case 'gray':return `<div class=inactive_leg>${leg} / </div>`
+        case 'home':return `<a href='${href}'>${HOME_ICON} ${leg} </a> /`
+        case 'regular':return `<a href='${href}'> ${leg} </a> /`
+        default:return ''
       }
     }()
     ans.push(render_leg)

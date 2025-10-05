@@ -22,14 +22,26 @@
       "label": "eslint",
       "type": "shell",
       "command": "npm run watch_eslint",
-    },      
+    },   
+    {
+      "label": "oxlint",
+      "type": "shell",
+      "command": "npm run run_oxlint",
+    },       
+    {
+      "label": "biome",
+      "type": "shell",
+      "command": "npm run run_biome",
+    },
     {
       "label": "runall",
       "dependsOn": [
         "build",
         "eslint",
         "tsc",
-        "server"
+        "server",
+        "oxlint",
+        "biome"
       ]
     }    
   ]
